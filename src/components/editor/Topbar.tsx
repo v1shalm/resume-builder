@@ -10,6 +10,7 @@ import { Tooltip, Kbd } from "@/components/ui/Tooltip";
 // ⌘E hint on Export PDF — same vocabulary, different tones.
 import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store";
+import { useMatchStore } from "@/lib/match-store";
 import { useTheme } from "@/lib/theme";
 import { useThemeSwap } from "@/lib/useThemeSwap";
 import { useSfx } from "@/lib/useSfx";
@@ -107,6 +108,9 @@ export function Topbar() {
         e.preventDefault();
         prefetchExport();
         setExportOpen(true);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        useMatchStore.getState().toggleDrawer();
       }
     };
     const onOpenExport = () => {

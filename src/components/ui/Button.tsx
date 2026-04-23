@@ -16,10 +16,14 @@ const buttonVariants = cva(
       variant: {
         primary: [
           "text-ink-accentText font-semibold",
-          "bg-[linear-gradient(180deg,oklch(0.895_0.158_85)_0%,oklch(0.855_0.165_85)_50%,oklch(0.815_0.172_82)_100%)]",
+          // Gradient swaps on hover (bright → slightly dimmer) via
+          // the --cta-grad / --cta-grad-hover tokens. Using the
+          // arbitrary-property form `[background-image:...]` because
+          // Tailwind's `bg-[...]` shorthand writes `background-color`
+          // which can't hold a gradient. Shadows stay constant so
+          // hover reads as a colour settle, not a depth change.
+          "[background-image:var(--cta-grad)] hover:[background-image:var(--cta-grad-hover)]",
           "shadow-[inset_0_1px_0_oklch(1_0_0_/_0.35),inset_0_-1px_0_oklch(0.4_0.08_70_/_0.2),0_0_0_1px_oklch(0.55_0.12_75_/_0.35),0_1px_2px_oklch(0_0_0_/_0.4)]",
-          "hover:bg-[linear-gradient(180deg,oklch(0.915_0.158_85)_0%,oklch(0.875_0.165_85)_50%,oklch(0.835_0.172_82)_100%)]",
-          "hover:shadow-[inset_0_1px_0_oklch(1_0_0_/_0.4),inset_0_-1px_0_oklch(0.4_0.08_70_/_0.2),0_0_0_1px_oklch(0.55_0.12_75_/_0.4),0_3px_8px_-2px_oklch(0_0_0_/_0.5)]",
         ].join(" "),
         secondary:
           "bg-ink-raised text-ink-text border border-ink-border hover:bg-ink-hover hover:border-ink-borderStrong",

@@ -15,7 +15,9 @@ import {
   ChevronDown,
   ChevronRight,
   ListChecks,
+  Target,
 } from "lucide-react";
+import { useMatchStore } from "@/lib/match-store";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/motion";
 
@@ -228,6 +230,8 @@ export function PreviewPane() {
   const resume = useResumeStore((s) => s.resume);
   const select = useResumeStore((s) => s.select);
   const play = useSfx();
+  const matchDrawerOpen = useMatchStore((s) => s.drawerOpen);
+  const toggleMatchDrawer = useMatchStore((s) => s.toggleDrawer);
   const [zoom, setZoom] = useState(0.82);
   const [fitMode, setFitMode] = useState(true);
   // Which review popover is open. Only one at a time so the two pills
@@ -606,6 +610,40 @@ export function PreviewPane() {
         >
           <Maximize2 className="h-3 w-3" aria-hidden />
           Fit
+        </motion.button>
+
+        <div className="mx-0.5 h-4 w-px bg-ink-border" aria-hidden />
+
+        {/* ATS Match — primary amber chrome (same gradient + shadow
+            stack as Button.primary) so the feature's importance lands
+            at a glance. When the drawer is open, adds an inset-pressed
+            treatment to read as a toggled-on state while staying amber. */}
+        <motion.button
+          onClick={() => {
+            play(matchDrawerOpen ? "modalClose" : "modalOpen");
+            toggleMatchDrawer();
+          }}
+          whileTap={{ scale: 0.96, y: 0.5 }}
+          transition={spring.press}
+          aria-pressed={matchDrawerOpen}
+          aria-label={matchDrawerOpen ? "Close ATS match check" : "Open ATS match check"}
+          className={cn(
+            "flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[12px] font-semibold text-ink-accentText transition-[background,box-shadow] duration-fast",
+            matchDrawerOpen
+              ? [
+                  "bg-[linear-gradient(180deg,oklch(0.855_0.165_85)_0%,oklch(0.815_0.172_82)_50%,oklch(0.775_0.178_78)_100%)]",
+                  "shadow-[inset_0_2px_3px_oklch(0.4_0.08_70_/_0.3),inset_0_-1px_0_oklch(1_0_0_/_0.15),0_0_0_1px_oklch(0.55_0.12_75_/_0.45)]",
+                ].join(" ")
+              : [
+                  // Same CTA tokens as Button.primary so this pill and
+                  // the Export PDF CTA stay in lockstep globally.
+                  "[background-image:var(--cta-grad)] hover:[background-image:var(--cta-grad-hover)]",
+                  "shadow-[inset_0_1px_0_oklch(1_0_0_/_0.35),inset_0_-1px_0_oklch(0.4_0.08_70_/_0.2),0_0_0_1px_oklch(0.55_0.12_75_/_0.35),0_1px_2px_oklch(0_0_0_/_0.4)]",
+                ].join(" "),
+          )}
+        >
+          <Target className="h-3 w-3" aria-hidden />
+          ATS Match
         </motion.button>
       </motion.div>
     </div>

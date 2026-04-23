@@ -22,11 +22,13 @@ import {
   Sparkles,
   CornerDownLeft,
   Search,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Kbd } from "@/components/ui/Kbd";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useResumeStore } from "@/lib/store";
+import { useMatchStore } from "@/lib/match-store";
 import { useTheme } from "@/lib/theme";
 import { useThemeSwap } from "@/lib/useThemeSwap";
 import { useSoundSettings } from "@/lib/soundSettings";
@@ -198,6 +200,15 @@ export function CommandPalette() {
         group: "navigate",
         keywords: ["portfolio", "social"],
         run: () => select({ kind: "section", id: "links" }),
+      },
+
+      {
+        id: "ats-match",
+        label: "ATS Match — check vs a job description",
+        icon: Target,
+        group: "actions",
+        keywords: ["ats", "match", "keywords", "jd", "job", "tailor", "score", "check"],
+        run: () => useMatchStore.getState().setDrawerOpen(true),
       },
 
       {

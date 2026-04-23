@@ -38,6 +38,24 @@
      success-toast bark. */
   --ink-success: oklch(0.58 0.14 150);
 
+  /* Primary CTA gradient tokens. The default is the "bright" form
+     (was previously the hover state); hover settles back to a slightly
+     dimmer gradient — reads as "pulled toward pressed" instead of
+     "lit up." Shadows stay on the Button component; only the fill
+     swaps on hover. */
+  --cta-grad: linear-gradient(
+    180deg,
+    oklch(0.915 0.158 85) 0%,
+    oklch(0.875 0.165 85) 50%,
+    oklch(0.835 0.172 82) 100%
+  );
+  --cta-grad-hover: linear-gradient(
+    180deg,
+    oklch(0.895 0.158 85) 0%,
+    oklch(0.855 0.165 85) 50%,
+    oklch(0.815 0.172 82) 100%
+  );
+
   /* Warn pill tokens — the overflow pill's amber chrome. Separate
      from --ink-accent because warnings need more saturation to read
      as a callout vs a button surface. */

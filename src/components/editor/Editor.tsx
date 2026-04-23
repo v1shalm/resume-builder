@@ -6,14 +6,17 @@ import { PreviewPane } from "./PreviewPane";
 import { EditorPanel } from "./EditorPanel";
 import { CommandPalette, OPEN_IMPORT_EVENT } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
+import { MatchCheckDrawer } from "./MatchCheckDrawer";
 import { SoundRoot } from "@/components/providers/SoundRoot";
 import { Toaster } from "@/components/ui/Toaster";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { useUndoShortcuts } from "@/lib/useUndoShortcuts";
+import { useMatchStore } from "@/lib/match-store";
 
 export function Editor() {
   const [mounted, setMounted] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const matchDrawerOpen = useMatchStore((s) => s.drawerOpen);
   useUndoShortcuts();
   useEffect(() => {
     setMounted(true);
@@ -50,7 +53,11 @@ export function Editor() {
         */}
         <div className="grid flex-1 overflow-hidden grid-cols-1 grid-rows-[minmax(0,52vh)_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_340px] md:grid-rows-1 lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_440px]">
           <PreviewPane />
-          <EditorPanel />
+          {/* Editor slot — when Match check is open, the drawer takes
+              this slot instead of the editor panel. Preview stays fully
+              visible so the user can scan their resume while iterating
+              on keyword coverage. */}
+          {matchDrawerOpen ? <MatchCheckDrawer /> : <EditorPanel />}
         </div>
         <Toaster />
         <CommandPalette />
