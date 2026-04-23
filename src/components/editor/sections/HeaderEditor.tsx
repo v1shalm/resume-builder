@@ -59,7 +59,7 @@ export function HeaderEditor() {
             placeholder="What you do and what you bring to a team."
           />
           <div className="flex justify-end">
-            <CharCount value={header.tagline} softMax={240} />
+            <CharCount value={header.tagline} softMax={180} />
           </div>
         </div>
       </Field>

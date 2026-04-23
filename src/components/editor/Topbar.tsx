@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useStore } from "zustand";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/Button";
+import { Tooltip, Kbd } from "@/components/ui/Tooltip";
+import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
-import { useSoundSettings } from "@/lib/soundSettings";
-import { useSfx } from "@/lib/useSfx";
 import { useThemeSwap } from "@/lib/useThemeSwap";
+import { useSfx } from "@/lib/useSfx";
+import { showToast } from "@/lib/toast";
 import { SavedChip } from "./SavedChip";
+import { OPEN_EXPORT_EVENT, OPEN_PALETTE_EVENT } from "./CommandPalette";
 
 // `@react-pdf/renderer` is ~300 KB+ of PDF engine. Code-split the whole
 // ExportDialog (which transitively pulls it in) so visitors who never
@@ -19,35 +23,70 @@ import { SavedChip } from "./SavedChip";
 const loadExportDialog = () =>
   import("./ExportDialog").then((m) => ({ default: m.ExportDialog }));
 const ExportDialog = dynamic(loadExportDialog, { ssr: false });
-import {
-  Download,
-  RotateCcw,
-  FileJson,
-  FileUp,
-  Sun,
-  Moon,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+import { Download, Sun, Moon, Undo2, Redo2, Command } from "lucide-react";
 import { spring, stagger, rowFadeUp } from "@/lib/motion";
 
+type TemporalApi = {
+  undo: () => void;
+  redo: () => void;
+  pastStates: unknown[];
+  futureStates: unknown[];
+};
+
+/*
+ * Topbar hierarchy:
+ *   left    — identity cluster: logo · "Resume" title · resume name · SavedChip
+ *   right   — tools, grouped left-to-right by intent:
+ *               history (undo / redo)
+ *               │
+ *               entry  (⌘K search chip) · theme
+ *               │
+ *               primary CTA (Export)
+ *
+ * Import JSON, Save JSON backup, Reset to starter, and the Sound mute
+ * toggle all live in the command palette (⌘K) — keeping them out of
+ * the bar trades one click (open palette) for a significantly calmer
+ * chrome on every edit.
+ */
 export function Topbar() {
   // Only the header name drives this bar's render. Everything else
-  // (reset/importResume/resume-for-JSON-export) is read via `getState()`
-  // inside the callbacks, so typing a bullet in the editor doesn't
-  // re-render the whole topbar on every keystroke.
+  // is read via `getState()` inside callbacks, so typing a bullet
+  // doesn't re-render the whole topbar on every keystroke.
   const name = useResumeStore((s) => s.resume.header.name);
   const theme = useTheme((s) => s.theme);
   const swapTheme = useThemeSwap();
-  const soundEnabled = useSoundSettings((s) => s.enabled);
-  const toggleSound = useSoundSettings((s) => s.toggle);
   const play = useSfx();
+
+  // Subscribe to zundo's temporal store so Undo/Redo know when to
+  // disable. Reactive — edits anywhere light up the buttons.
+  const temporalStore = (
+    useResumeStore as unknown as { temporal: import("zustand").StoreApi<TemporalApi> }
+  ).temporal;
+  const canUndo = useStore(temporalStore, (s) => s.pastStates.length > 0);
+  const canRedo = useStore(temporalStore, (s) => s.futureStates.length > 0);
+
+  const runUndo = () => {
+    const t = temporalStore.getState();
+    if (t.pastStates.length === 0) return;
+    t.undo();
+    showToast({ message: "Undone", duration: 1600 });
+  };
+  const runRedo = () => {
+    const t = temporalStore.getState();
+    if (t.futureStates.length === 0) return;
+    t.redo();
+    showToast({ message: "Redone", duration: 1600 });
+  };
+
+  const openPalette = () => {
+    play("tap");
+    window.dispatchEvent(new CustomEvent(OPEN_PALETTE_EVENT));
+  };
 
   const [exportOpen, setExportOpen] = useState(false);
 
-  // Prefetch the lazy ExportDialog chunk. Called on hover/focus of the
-  // Export button AND when the ⌘E shortcut is observed, so the dialog
-  // mount is instant in practice.
+  // Prefetch the lazy ExportDialog chunk on hover/focus/shortcut so the
+  // dialog mount is instant in practice.
   const prefetchExport = useCallback(() => {
     void loadExportDialog();
   }, []);
@@ -56,59 +95,21 @@ export function Topbar() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e") {
         e.preventDefault();
-        // Kick the chunk load in parallel with the state flip so the
-        // dialog shows up as soon as the chunk arrives.
         prefetchExport();
         setExportOpen(true);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [prefetchExport]);
-
-  const downloadJSON = () => {
-    const resume = useResumeStore.getState().resume;
-    const blob = new Blob([JSON.stringify(resume, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${resume.header.name.replace(/\s+/g, "_")}_resume.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const uploadJSON = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(String(reader.result));
-          useResumeStore.getState().importResume(data);
-        } catch {
-          alert("Couldn't read that file. Make sure it's a JSON saved from this builder.");
-        }
-      };
-      reader.readAsText(file);
+    const onOpenExport = () => {
+      prefetchExport();
+      setExportOpen(true);
     };
-    input.click();
-  };
-
-  const handleReset = () => {
-    if (
-      confirm(
-        "Reset to the starter resume?\n\nYour current edits will be replaced and can't be recovered. Save a JSON backup first if you want to keep them.",
-      )
-    ) {
-      useResumeStore.getState().reset();
-    }
-  };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener(OPEN_EXPORT_EVENT, onOpenExport);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_EXPORT_EVENT, onOpenExport);
+    };
+  }, [prefetchExport]);
 
   return (
     <>
@@ -116,9 +117,13 @@ export function Topbar() {
         variants={stagger(0.045, 0.06)}
         initial="hidden"
         animate="show"
-        className="relative z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-ink-border bg-topbar px-3 shadow-topbar-t sm:px-4 md:px-5"
+        className="relative z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-ink-border bg-topbar px-3 shadow-topbar-t sm:px-4 md:px-5"
       >
-        <motion.div variants={rowFadeUp} className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+        {/* ── Identity cluster ─────────────────────────────────── */}
+        <motion.div
+          variants={rowFadeUp}
+          className="flex min-w-0 items-center gap-2 sm:gap-2.5"
+        >
           <motion.div
             variants={rowFadeUp}
             whileHover={{ rotate: -6, scale: 1.06 }}
@@ -128,131 +133,136 @@ export function Topbar() {
           >
             <span className="text-[12px] font-semibold text-ink-text">R</span>
           </motion.div>
-          <div className="flex min-w-0 items-baseline gap-2.5">
-            <h1 className="truncate text-[14px] font-semibold tracking-tight text-ink-text">
-              <span className="hidden sm:inline">Resume Builder</span>
-              <span className="sm:hidden">Resume</span>
+
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+            <h1 className="hidden shrink-0 text-[13px] font-semibold tracking-tight text-ink-text sm:inline">
+              Resume
             </h1>
-            <span className="hidden truncate text-[12px] text-ink-subtle md:inline">
-              {name || "—"}
+            <span
+              aria-hidden
+              className="hidden text-ink-border sm:inline"
+            >
+              ·
             </span>
+            <span className="truncate text-[12.5px] text-ink-muted">
+              {name || "Untitled"}
+            </span>
+            <SavedChip />
           </div>
-          <SavedChip />
         </motion.div>
-        <motion.div variants={rowFadeUp} className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-          {/* Import — icon-only on narrow, icon+label from md */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={uploadJSON}
-            aria-label="Import JSON"
+
+        {/* ── Tools cluster ────────────────────────────────────── */}
+        <motion.div
+          variants={rowFadeUp}
+          className="flex shrink-0 items-center gap-0.5 sm:gap-1"
+        >
+          {/* history */}
+          <Tooltip
+            content={
+              <>
+                <span>Undo</span>
+                <Kbd>⌘Z</Kbd>
+              </>
+            }
           >
-            <FileUp className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-          <Button
-            variant="ghost"
-            size="md"
-            className="hidden md:inline-flex"
-            onClick={uploadJSON}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={runUndo}
+              disabled={!canUndo}
+              aria-label="Undo"
+              className="hidden sm:inline-flex"
+            >
+              <Undo2 className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+          </Tooltip>
+          <Tooltip
+            content={
+              <>
+                <span>Redo</span>
+                <Kbd>⌘⇧Z</Kbd>
+              </>
+            }
           >
-            <FileUp className="h-3.5 w-3.5" aria-hidden />
-            <span>Import</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="md"
-            className="hidden lg:inline-flex"
-            onClick={downloadJSON}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={runRedo}
+              disabled={!canRedo}
+              aria-label="Redo"
+              className="hidden sm:inline-flex"
+            >
+              <Redo2 className="h-3.5 w-3.5" aria-hidden />
+            </Button>
+          </Tooltip>
+
+          <div
+            className="mx-1.5 hidden h-4 w-px bg-ink-border sm:block"
+            aria-hidden
+          />
+
+          {/* entry + theme */}
+          <button
+            type="button"
+            onClick={openPalette}
+            aria-label="Open command palette"
+            className={cn(
+              "hidden h-7 items-center gap-2 rounded-md border border-ink-border bg-ink-surface pl-2 pr-1.5 text-[11.5px] text-ink-subtle transition-colors duration-fast sm:inline-flex",
+              "shadow-well-t hover:border-ink-border-strong hover:text-ink-muted",
+            )}
           >
-            <FileJson className="h-3.5 w-3.5" aria-hidden />
-            <span>Save JSON</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleReset}
-            aria-label="Reset to seeded resume"
-            className="hidden sm:inline-flex"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            sound={false}
-            onClick={() => {
-              // Play the "off" cue *before* flipping so the user gets one
-              // last piece of audible feedback at the moment they mute.
-              // When flipping back on, the next interaction will be the
-              // confirmation — simpler than fighting the provider's
-              // re-render timing.
-              if (soundEnabled) play("toggleOff");
-              toggleSound();
-            }}
-            aria-label={soundEnabled ? "Mute interface sounds" : "Unmute interface sounds"}
-            aria-pressed={!soundEnabled}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {soundEnabled ? (
-                <motion.span
-                  key="volume-on"
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.7 }}
-                  transition={spring.snap}
-                  className="flex"
-                >
-                  <Volume2 className="h-3.5 w-3.5" aria-hidden />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="volume-off"
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.7 }}
-                  transition={spring.snap}
-                  className="flex"
-                >
-                  <VolumeX className="h-3.5 w-3.5" aria-hidden />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            sound={false}
-            onClick={swapTheme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {theme === "dark" ? (
-                <motion.span
-                  key="sun"
-                  initial={{ opacity: 0, rotate: -60, scale: 0.7 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 60, scale: 0.7 }}
-                  transition={spring.snap}
-                  className="flex"
-                >
-                  <Sun className="h-3.5 w-3.5" aria-hidden />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="moon"
-                  initial={{ opacity: 0, rotate: 60, scale: 0.7 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: -60, scale: 0.7 }}
-                  transition={spring.snap}
-                  className="flex"
-                >
-                  <Moon className="h-3.5 w-3.5" aria-hidden />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Button>
-          <div className="mx-1 hidden h-5 w-px bg-ink-border sm:mx-1.5 sm:block" aria-hidden />
+            <Command className="h-3 w-3" aria-hidden />
+            <span>Search</span>
+            <kbd
+              aria-hidden
+              className="flex h-[18px] items-center justify-center gap-[1px] rounded-[4px] border border-ink-border bg-ink-bg px-1 font-mono text-[9.5px] font-semibold leading-none text-ink-muted"
+            >
+              <span>⌘</span>K
+            </kbd>
+          </button>
+
+          <Tooltip content={theme === "dark" ? "Light mode" : "Dark mode"}>
+            <Button
+              variant="ghost"
+              size="icon"
+              sound={false}
+              onClick={swapTheme}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {theme === "dark" ? (
+                  <motion.span
+                    key="sun"
+                    initial={{ opacity: 0, rotate: -60, scale: 0.7 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: 60, scale: 0.7 }}
+                    transition={spring.snap}
+                    className="flex"
+                  >
+                    <Sun className="h-3.5 w-3.5" aria-hidden />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="moon"
+                    initial={{ opacity: 0, rotate: 60, scale: 0.7 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: -60, scale: 0.7 }}
+                    transition={spring.snap}
+                    className="flex"
+                  >
+                    <Moon className="h-3.5 w-3.5" aria-hidden />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Button>
+          </Tooltip>
+
+          <div
+            className="mx-1.5 hidden h-4 w-px bg-ink-border sm:block"
+            aria-hidden
+          />
+
+          {/* primary CTA */}
           <Button
             variant="primary"
             size="lg"

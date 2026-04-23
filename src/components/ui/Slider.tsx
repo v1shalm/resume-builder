@@ -7,11 +7,12 @@ import { useSfx } from "@/lib/useSfx";
 
 const TICK_COUNT = 11;
 // Thumb is smaller than the track so there's a clear "pocket" of pill color
-// around it on every side (matching the reference). FILL_EXTEND_PX is the
-// distance past the thumb CENTER where the fill ends — so ~8–10px of fill
-// is visible past the thumb's right edge at every value.
+// around it on every side. FILL_EXTEND_PX is the distance past the thumb
+// CENTER where the fill ends — sized so the right pocket (5px) matches the
+// top/bottom pocket created by (TRACK_H - THUMB_SIZE_PX) / 2 = (26 - 16) / 2.
+//   right pocket = FILL_EXTEND_PX - THUMB_SIZE_PX / 2 = 13 - 8 = 5
 const THUMB_SIZE_PX = 16;
-const FILL_EXTEND_PX = 16;
+const FILL_EXTEND_PX = 13;
 
 type Props = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>;
 

@@ -4,15 +4,25 @@ import { useEffect, useState } from "react";
 import { Topbar } from "./Topbar";
 import { PreviewPane } from "./PreviewPane";
 import { EditorPanel } from "./EditorPanel";
+import { CommandPalette, OPEN_IMPORT_EVENT } from "./CommandPalette";
+import { ImportDialog } from "./ImportDialog";
 import { SoundRoot } from "@/components/providers/SoundRoot";
 import { Toaster } from "@/components/ui/Toaster";
+import { TooltipProvider } from "@/components/ui/Tooltip";
 import { useUndoShortcuts } from "@/lib/useUndoShortcuts";
 
 export function Editor() {
   const [mounted, setMounted] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   useUndoShortcuts();
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const onOpen = () => setImportOpen(true);
+    window.addEventListener(OPEN_IMPORT_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_IMPORT_EVENT, onOpen);
   }, []);
 
   if (!mounted) {
@@ -28,6 +38,7 @@ export function Editor() {
 
   return (
     <SoundRoot>
+      <TooltipProvider delayDuration={300} skipDelayDuration={200}>
       <div className="flex h-[100dvh] w-screen flex-col overflow-hidden bg-ink-bg text-ink-text">
         <Topbar />
         {/*
@@ -42,7 +53,10 @@ export function Editor() {
           <EditorPanel />
         </div>
         <Toaster />
+        <CommandPalette />
+        <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
       </div>
+      </TooltipProvider>
     </SoundRoot>
   );
 }
