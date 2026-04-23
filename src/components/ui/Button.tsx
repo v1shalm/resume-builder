@@ -25,8 +25,13 @@ const buttonVariants = cva(
           "[background-image:var(--cta-grad)] hover:[background-image:var(--cta-grad-hover)]",
           "shadow-[inset_0_1px_0_oklch(1_0_0_/_0.35),inset_0_-1px_0_oklch(0.4_0.08_70_/_0.2),0_0_0_1px_oklch(0.55_0.12_75_/_0.35),0_1px_2px_oklch(0_0_0_/_0.4)]",
         ].join(" "),
-        secondary:
-          "bg-ink-raised text-ink-text border border-ink-border hover:bg-ink-hover hover:border-ink-borderStrong",
+        // White CTA — bg-card gradient + raised shadow stack so it
+        // reads as a tactile "secondary action" next to the primary
+        // amber button. Used by "Add role", "ATS Match", etc.
+        secondary: [
+          "bg-card text-ink-text border border-ink-border shadow-raised-t",
+          "hover:bg-ink-hover hover:shadow-[inset_0_1px_0_var(--shadow-highlight),0_2px_4px_var(--shadow-drop-close),0_1px_0_0_var(--shadow-edge-dark)]",
+        ].join(" "),
         ghost:
           "bg-transparent text-ink-muted hover:bg-ink-hover hover:text-ink-text",
         outline:

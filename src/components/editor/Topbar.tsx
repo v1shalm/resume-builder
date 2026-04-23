@@ -27,7 +27,7 @@ import { OPEN_EXPORT_EVENT, OPEN_PALETTE_EVENT } from "./CommandPalette";
 const loadExportDialog = () =>
   import("./ExportDialog").then((m) => ({ default: m.ExportDialog }));
 const ExportDialog = dynamic(loadExportDialog, { ssr: false });
-import { Download, Sun, Moon, Undo2, Redo2, Search } from "lucide-react";
+import { Download, Sun, Moon, Undo2, Redo2, Search, Target } from "lucide-react";
 import { spring, stagger, rowFadeUp } from "@/lib/motion";
 
 type TemporalApi = {
@@ -71,6 +71,8 @@ export function Topbar() {
   ).temporal;
   const canUndo = useStore(temporalStore, (s) => s.pastStates.length > 0);
   const canRedo = useStore(temporalStore, (s) => s.futureStates.length > 0);
+  const matchDrawerOpen = useMatchStore((s) => s.drawerOpen);
+  const toggleMatchDrawer = useMatchStore((s) => s.toggleDrawer);
 
   const runUndo = () => {
     const t = temporalStore.getState();
@@ -285,6 +287,33 @@ export function Topbar() {
 
           <div
             className="mx-1.5 hidden h-4 w-px bg-ink-border sm:block"
+            aria-hidden
+          />
+
+          {/* Final Review cluster — ATS Match (secondary white CTA)
+              sits next to Export PDF (primary amber CTA). The grouping
+              implies workflow: check first, ship second. A thin
+              divider between them sharpens the "pre-flight check" vs
+              "ship" distinction. */}
+          <Button
+            variant="secondary"
+            size="md"
+            sound={false}
+            onClick={() => {
+              play(matchDrawerOpen ? "modalClose" : "modalOpen");
+              toggleMatchDrawer();
+            }}
+            aria-pressed={matchDrawerOpen}
+            aria-label={matchDrawerOpen ? "Close ATS match check" : "Open ATS match check"}
+            className="hidden px-3 sm:inline-flex"
+          >
+            <Target className="h-3.5 w-3.5" aria-hidden />
+            <span className="hidden md:inline">ATS Match</span>
+            <Kbd size="sm" className="ml-1 hidden md:inline-flex">⌘J</Kbd>
+          </Button>
+
+          <div
+            className="mx-2 hidden h-5 w-px bg-ink-border sm:mx-2.5 sm:block"
             aria-hidden
           />
 
