@@ -68,8 +68,13 @@ export interface ButtonProps
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild, onClick, sound, ...props }, ref) => {
     const play = useSfx();
+    // Only the primary CTA defaults to a sound — secondary / ghost /
+    // outline / danger stay silent unless the caller explicitly opts
+    // into a sound (e.g. `sound="add"` on the Add-role button,
+    // `sound="tap"` on Undo/Redo). This keeps the app quiet on the
+    // common path and reserves audible cues for commits + one-offs.
     const resolvedSound: SoundName | false =
-      sound === undefined ? (variant === "primary" ? "click" : "tap") : sound;
+      sound === undefined ? (variant === "primary" ? "click" : false) : sound;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (resolvedSound) play(resolvedSound);

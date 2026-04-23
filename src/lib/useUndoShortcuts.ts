@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useResumeStore } from "./store";
+import { useSfx } from "./useSfx";
 import { showToast } from "./toast";
 
 // zundo types leak the full zustand store API here; we only use undo/redo.
@@ -26,6 +27,7 @@ type TemporalApi = {
  * cursor returns cleanly.
  */
 export function useUndoShortcuts() {
+  const play = useSfx();
   useEffect(() => {
     const getTemporal = () =>
       (useResumeStore as unknown as { temporal: { getState: () => TemporalApi } })
@@ -44,6 +46,7 @@ export function useUndoShortcuts() {
       if (isUndo) {
         if (temporal.pastStates.length === 0) return;
         e.preventDefault();
+        play("tap");
         temporal.undo();
         showToast({
           message: "Undone",
@@ -53,6 +56,7 @@ export function useUndoShortcuts() {
       } else if (isRedo) {
         if (temporal.futureStates.length === 0) return;
         e.preventDefault();
+        play("tap");
         temporal.redo();
         showToast({
           message: "Redone",
@@ -64,5 +68,5 @@ export function useUndoShortcuts() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [play]);
 }

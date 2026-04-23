@@ -75,6 +75,22 @@ export function VariantsSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed]);
 
+  // Perf: the panel's thumbnails subscribe to the resume store and
+  // would re-render on every keystroke even while invisible. Mount
+  // body immediately on expand; unmount ~400ms after collapse begins
+  // (after fade-out completes) so edits during a collapsed session
+  // don't do background render work. A rapid expand→collapse→expand
+  // toggle cancels the pending unmount via effect cleanup.
+  const [renderBody, setRenderBody] = useState(!collapsed);
+  useEffect(() => {
+    if (!collapsed) {
+      setRenderBody(true);
+      return;
+    }
+    const t = setTimeout(() => setRenderBody(false), 400);
+    return () => clearTimeout(t);
+  }, [collapsed]);
+
   // Both pill AND panel are always mounted. They crossfade via the
   // `animate` prop based on `collapsed` — no AnimatePresence, no
   // unmount/remount, no way for the transition to get stuck on
@@ -105,11 +121,15 @@ export function VariantsSidebar() {
           "shadow-[inset_0_1px_0_var(--shadow-highlight),0_2px_4px_var(--shadow-drop-close),0_18px_44px_-10px_var(--shadow-drop-far),0_8px_20px_-8px_var(--shadow-drop-mid)]",
         )}
       >
-        <Header onCollapse={collapse} />
-        <Tabs tab={tab} onChange={setTab} />
-        <div className="flex-1 overflow-auto">
-          {tab === "resumes" ? <ResumesTab /> : <TemplatesTab />}
-        </div>
+        {renderBody && (
+          <>
+            <Header onCollapse={collapse} />
+            <Tabs tab={tab} onChange={setTab} />
+            <div className="flex-1 overflow-auto">
+              {tab === "resumes" ? <ResumesTab /> : <TemplatesTab />}
+            </div>
+          </>
+        )}
       </motion.aside>
     </>
   );
@@ -203,7 +223,6 @@ function Tabs({
   tab: "resumes" | "templates";
   onChange: (t: "resumes" | "templates") => void;
 }) {
-  const play = useSfx();
   const tabs: { id: "resumes" | "templates"; label: string }[] = [
     { id: "resumes", label: "My Resumes" },
     { id: "templates", label: "Templates" },
@@ -221,10 +240,7 @@ function Tabs({
             role="tab"
             aria-selected={active}
             type="button"
-            onClick={() => {
-              if (!active) play("tabSwap");
-              onChange(t.id);
-            }}
+            onClick={() => onChange(t.id)}
             className={cn(
               "relative flex-1 whitespace-nowrap px-2 py-2.5 text-[12px] font-medium transition-colors duration-fast",
               "hover:text-ink-text",
@@ -335,7 +351,6 @@ function ResumesTab() {
 
   const handleSwitch = (id: string) => {
     if (id === activeId) return;
-    play("tabSwap");
     switchVariant(id);
   };
 
@@ -535,11 +550,9 @@ function TemplatesTab() {
     (s) => s.variantMeta[s.currentVariantId]?.templateId,
   );
   const applyTemplate = useResumeStore((s) => s.applyTemplate);
-  const play = useSfx();
 
   const handleApply = (tpl: Template) => {
     if (tpl.id === activeTemplateId) return;
-    play("select");
     applyTemplate(tpl.id);
     showToast({ message: `Applied “${tpl.label}”`, duration: 2000 });
   };

@@ -201,6 +201,7 @@ export function Topbar() {
             <Button
               variant="ghost"
               size="icon"
+              sound="tap"
               onClick={runUndo}
               disabled={!canUndo}
               aria-label="Undo"
@@ -220,6 +221,7 @@ export function Topbar() {
             <Button
               variant="ghost"
               size="icon"
+              sound="tap"
               onClick={runRedo}
               disabled={!canRedo}
               aria-label="Redo"

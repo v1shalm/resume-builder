@@ -12,7 +12,6 @@ import { LinksEditor } from "./sections/LinksEditor";
 import { SectionArranger } from "./SectionArranger";
 import { cn } from "@/lib/utils";
 import { spring, tabSwap } from "@/lib/motion";
-import { useSfx } from "@/lib/useSfx";
 
 const tabs: { id: "header" | SectionKind; label: string }[] = [
   { id: "header", label: "Header" },
@@ -25,7 +24,6 @@ const tabs: { id: "header" | SectionKind; label: string }[] = [
 export function EditorPanel() {
   const selection = useResumeStore((s) => s.selection);
   const select = useResumeStore((s) => s.select);
-  const play = useSfx();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const activeTab: "header" | SectionKind =
@@ -42,7 +40,6 @@ export function EditorPanel() {
               : "links";
 
   const activateTab = (id: (typeof tabs)[number]["id"]) => {
-    if (activeTab !== id) play("tabSwap");
     select(
       id === "header"
         ? { kind: "header" }

@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { ResumePreview } from "../preview/ResumePreview";
 import { FontLoader } from "../preview/FontLoader";
 import { useResumeStore } from "@/lib/store";
-import { useSfx } from "@/lib/useSfx";
 import type { Resume, SectionKind } from "@/lib/types";
 import {
   Minus,
@@ -227,7 +226,6 @@ const PAGE_H = 1123;
 export function PreviewPane() {
   const resume = useResumeStore((s) => s.resume);
   const select = useResumeStore((s) => s.select);
-  const play = useSfx();
   const [zoom, setZoom] = useState(0.82);
   const [fitMode, setFitMode] = useState(true);
   // Which review popover is open. Only one at a time so the two pills
@@ -286,15 +284,10 @@ export function PreviewPane() {
   }, [openPanel]);
 
   const togglePanel = (id: "overflow" | "quality") => {
-    setOpenPanel((prev) => {
-      const next = prev === id ? null : id;
-      play(next ? "dropdownOpen" : "dropdownClose");
-      return next;
-    });
+    setOpenPanel((prev) => (prev === id ? null : id));
   };
 
   const handleTipClick = (tip: ReviewTip) => {
-    play("tap");
     select(
       tip.target === "header"
         ? { kind: "header" }

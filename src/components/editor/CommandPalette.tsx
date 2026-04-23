@@ -375,14 +375,11 @@ export function CommandPalette() {
     requestAnimationFrame(() => cmd.run());
   };
 
-  // Soft "tick" on every navigation — fires on keyboard arrows AND on
-  // mouse-hover-into-new-row so the palette feels tactile either way.
-  // Guarded against same-index refires so brushing the mouse across one
-  // row doesn't stutter.
+  // Move without a sound — hover-tick was too chatty. Commit (Enter)
+  // still plays via runAt, which is the meaningful moment.
   const moveActive = (next: number) => {
     if (next === activeIdx) return;
     setActiveIdx(next);
-    play("tick");
   };
 
   const onInputKey = (e: React.KeyboardEvent) => {
