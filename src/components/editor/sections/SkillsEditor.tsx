@@ -5,7 +5,7 @@ import { showToast } from "@/lib/toast";
 import { Input } from "@/components/ui/Input";
 import { TokenInput } from "@/components/ui/TokenInput";
 import { SortableList, DragHandle } from "../SortableList";
-import { SectionHeader, EmptyState } from "./ExperienceEditor";
+import { SectionHeader, EmptyState, SkillsSkeleton } from "./ExperienceEditor";
 import { Trash2 } from "lucide-react";
 import { SKILL_SUGGESTIONS } from "@/lib/skill-suggestions";
 import { useSfx } from "@/lib/useSfx";
@@ -20,12 +20,18 @@ export function SkillsEditor() {
 
   return (
     <div className="flex flex-col gap-5">
-      <SectionHeader count={groups.length} onAdd={add} addLabel="Add group" />
+      {groups.length > 0 && (
+        <SectionHeader count={groups.length} onAdd={add} addLabel="Add group" />
+      )}
       {groups.length === 0 ? (
         <EmptyState
-          label="No skill groups yet."
-          hint="Group your skills by category — e.g. Design, Tools, Research."
-        />
+          title="Add your first skill group"
+          description="Group by category so they scan fast — e.g. Design, Tools, Research."
+          addLabel="Add group"
+          onAdd={add}
+        >
+          <SkillsSkeleton />
+        </EmptyState>
       ) : (
         <SortableList
           items={groups}
@@ -61,7 +67,7 @@ export function SkillsEditor() {
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
               </div>
-              <div className="p-4">
+              <div className="p-5">
                 <TokenInput
                   aria-label={`Skills in ${g.label || "this group"}`}
                   value={g.items}

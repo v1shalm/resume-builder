@@ -29,40 +29,45 @@ export function HeaderEditor() {
 
   return (
     <div className="flex flex-col gap-7">
-      <Field label="Name">
-        <Input
-          value={header.name}
-          onChange={(e) => updateHeader({ name: e.target.value })}
-          placeholder="Your name"
-        />
-      </Field>
-
-      <Field label="Title">
-        <div className="flex flex-col gap-1">
+      {/* Identity cluster — the three fields that define "who" */}
+      <section className="flex flex-col gap-6">
+        <Field label="Name">
           <Input
-            value={header.title}
-            onChange={(e) => updateHeader({ title: e.target.value })}
-            placeholder="Product Designer"
+            value={header.name}
+            onChange={(e) => updateHeader({ name: e.target.value })}
+            placeholder="Your name"
           />
-          <div className="flex justify-end">
-            <CharCount value={header.title} softMax={60} />
-          </div>
-        </div>
-      </Field>
+        </Field>
 
-      <Field label="Summary" hint="One or two sentences about you.">
-        <div className="flex flex-col gap-1">
-          <Textarea
-            rows={3}
-            value={header.tagline}
-            onChange={(e) => updateHeader({ tagline: e.target.value })}
-            placeholder="What you do and what you bring to a team."
-          />
-          <div className="flex justify-end">
-            <CharCount value={header.tagline} softMax={180} />
+        <Field label="Title">
+          <div className="flex flex-col gap-1">
+            <Input
+              value={header.title}
+              onChange={(e) => updateHeader({ title: e.target.value })}
+              placeholder="Product Designer"
+            />
+            <div className="flex justify-end">
+              <CharCount value={header.title} softMax={60} />
+            </div>
           </div>
-        </div>
-      </Field>
+        </Field>
+
+        <Field label="Summary" hint="One or two sentences about you.">
+          <div className="flex flex-col gap-1">
+            <Textarea
+              rows={3}
+              value={header.tagline}
+              onChange={(e) => updateHeader({ tagline: e.target.value })}
+              placeholder="What you do and what you bring to a team."
+            />
+            <div className="flex justify-end">
+              <CharCount value={header.tagline} softMax={180} />
+            </div>
+          </div>
+        </Field>
+      </section>
+
+      <div className="rule-fade" aria-hidden />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -92,6 +97,8 @@ export function HeaderEditor() {
           )}
         />
       </section>
+
+      <div className="rule-fade" aria-hidden />
 
       <StyleEditor />
     </div>

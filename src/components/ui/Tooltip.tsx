@@ -37,14 +37,21 @@ export function Tooltip({
       onOpenChange={setOpen}
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+      {/* Radix's Slot (asChild) + AnimatePresence doesn't play nice —
+          during the exit frame Slot can see zero/multiple children and
+          throws "React.Children.only". Rendering the motion.div as a
+          regular child (no asChild) sidesteps the Slot entirely; the
+          tooltip chip is still a single element but Radix owns the
+          positioner and we just animate the inner wrapper. */}
       <AnimatePresence>
         {open && (
           <TooltipPrimitive.Portal forceMount>
             <TooltipPrimitive.Content
-              asChild
+              forceMount
               side={side}
               align={align}
               sideOffset={6}
+              className="z-50"
             >
               <motion.div
                 initial={{ opacity: 0, y: -4, scale: 0.96, filter: "blur(4px)" }}
@@ -52,7 +59,7 @@ export function Tooltip({
                 exit={{ opacity: 0, y: -2, scale: 0.96, filter: "blur(4px)", transition: { duration: 0.1 } }}
                 transition={spring.snap}
                 className={cn(
-                  "pointer-events-none z-50 flex items-center gap-1.5 rounded-md border border-ink-border bg-overlay px-2 py-1 text-[11px] font-medium text-ink-text",
+                  "pointer-events-none flex items-center gap-1.5 rounded-md border border-ink-border bg-overlay px-2 py-1 text-[11px] font-medium text-ink-text",
                   "shadow-[0_2px_4px_var(--shadow-drop-close),0_8px_20px_-6px_var(--shadow-drop-far)]",
                 )}
               >

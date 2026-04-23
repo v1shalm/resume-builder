@@ -21,8 +21,13 @@ type Props = {
 export function CharCount({ value, softMax, variant = "inline", className }: Props) {
   const len = value.length;
   const ratio = len / softMax;
+  // Stay calm for the whole usable range. Amber only kicks in in the
+  // last 5% (a genuine "you're near the cap" signal, not a nag), and
+  // red is reserved for past-the-cap. Previously amber started at 85%
+  // which read as alarming for a tagline at 90% of its budget — most
+  // writers work in that band intentionally.
   const state: "ok" | "near" | "over" =
-    ratio >= 1 ? "over" : ratio >= 0.85 ? "near" : "ok";
+    ratio > 1 ? "over" : ratio >= 0.95 ? "near" : "ok";
 
   if (len === 0) return null;
 
@@ -32,7 +37,7 @@ export function CharCount({ value, softMax, variant = "inline", className }: Pro
     state === "over"
       ? "text-ink-danger"
       : state === "near"
-        ? "text-[oklch(0.7_0.14_75)]"
+        ? "text-[oklch(0.75_0.11_85)]"
         : "text-ink-subtle";
 
   if (variant === "chip") {

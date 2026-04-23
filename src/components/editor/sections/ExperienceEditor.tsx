@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useResumeStore, temporalStore } from "@/lib/store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -24,17 +25,23 @@ export function ExperienceEditor() {
 
   return (
     <div className="flex flex-col gap-5">
-      <SectionHeader
-        count={items.length}
-        onAdd={addExperience}
-        addLabel="Add role"
-      />
+      {items.length > 0 && (
+        <SectionHeader
+          count={items.length}
+          onAdd={addExperience}
+          addLabel="Add role"
+        />
+      )}
 
       {items.length === 0 ? (
         <EmptyState
-          label="No roles yet."
-          hint="Add a role to start building out your experience."
-        />
+          title="Add your first role"
+          description="Start with your most recent role — recruiters read top-down."
+          addLabel="Add role"
+          onAdd={addExperience}
+        >
+          <ExperienceSkeleton />
+        </EmptyState>
       ) : (
         <SortableList
           items={items}
@@ -71,7 +78,7 @@ export function ExperienceEditor() {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4 p-4">
+              <div className="flex flex-col gap-5 p-5">
                 <Field label="Role">
                   <Input
                     value={exp.role}
@@ -179,11 +186,131 @@ export function SectionHeader({
   );
 }
 
-export function EmptyState({ label, hint }: { label: string; hint: string }) {
+/**
+ * Per-section empty state. A dashed-border card that pairs:
+ *   · a skeleton "ghost" of what a real entry looks like (children)
+ *   · a short title + description with role-specific micro-copy
+ *   · a primary "+ Add…" CTA
+ * so first-time users get a preview of the shape they're building
+ * toward, not just a blank slate.
+ */
+export function EmptyState({
+  title,
+  description,
+  addLabel,
+  onAdd,
+  children,
+}: {
+  title: string;
+  description: string;
+  addLabel: string;
+  onAdd: () => void;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="relative flex flex-col items-start gap-1.5 overflow-hidden rounded-xl border border-dashed border-ink-border bg-hatch px-5 py-7">
-      <span className="relative text-[13.5px] text-ink-text">{label}</span>
-      <span className="relative text-[12.5px] leading-[1.5] text-ink-muted">{hint}</span>
+    <div className="relative flex flex-col gap-5 overflow-hidden rounded-xl border border-dashed border-ink-border bg-hatch p-5">
+      {children && (
+        <div
+          aria-hidden
+          className="pointer-events-none relative opacity-40 [mask-image:linear-gradient(180deg,oklch(0_0_0)_0%,oklch(0_0_0_/_0.5)_80%,transparent_100%)]"
+        >
+          {children}
+        </div>
+      )}
+      <div className="relative flex flex-col gap-1.5">
+        <span className="text-[13.5px] font-medium text-ink-text">{title}</span>
+        <span className="text-[12.5px] leading-[1.5] text-ink-muted">
+          {description}
+        </span>
+      </div>
+      <div className="relative">
+        <Button variant="primary" size="md" sound="add" onClick={onAdd}>
+          <Plus className="h-3.5 w-3.5" aria-hidden />
+          {addLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── Skeletons ───────────────────────────────────────────────────────
+// Non-interactive visual scaffolds shown behind the empty-state copy.
+// Gray bars approximate the shape of a filled entry so users see what
+// they're building toward. Use `bg-ink-border` for "filled" bars and
+// `bg-ink-border-strong` for emphasis lines.
+
+function SkelBar({ className, style }: { className: string; style?: React.CSSProperties }) {
+  return (
+    <div className={`rounded-full bg-ink-border ${className}`} style={style} />
+  );
+}
+
+export function ExperienceSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-ink-border bg-card shadow-raised-t">
+      <div className="flex items-center justify-between gap-2 border-b border-ink-border bg-card-head px-3 py-2.5">
+        <SkelBar className="h-3 w-32" />
+        <SkelBar className="h-2.5 w-14" />
+      </div>
+      <div className="flex flex-col gap-2.5 p-4">
+        <SkelBar className="h-2.5 w-40" />
+        <SkelBar className="h-2 w-[90%]" />
+        <SkelBar className="h-2 w-[82%]" />
+        <SkelBar className="h-2 w-[55%]" />
+      </div>
+    </div>
+  );
+}
+
+export function SkillsSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-ink-border bg-card shadow-raised-t">
+      <div className="flex items-center gap-2 border-b border-ink-border bg-card-head px-3 py-2.5">
+        <SkelBar className="h-3 w-20" />
+      </div>
+      <div className="flex flex-wrap gap-1.5 p-4">
+        {[14, 20, 12, 16, 22, 14, 18].map((w, i) => (
+          <div
+            key={i}
+            className="h-5 rounded-full border border-ink-border bg-ink-surface"
+            style={{ width: `${w * 4}px` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function EducationSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-ink-border bg-card shadow-raised-t">
+      <div className="flex items-center justify-between gap-2 border-b border-ink-border bg-card-head px-3 py-2.5">
+        <SkelBar className="h-3 w-36" />
+        <SkelBar className="h-2.5 w-16" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 p-4">
+        <SkelBar className="h-2.5 w-full" />
+        <SkelBar className="h-2.5 w-full" />
+        <div className="col-span-2">
+          <SkelBar className="h-2.5 w-[60%]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LinksSkeleton() {
+  return (
+    <div className="flex flex-col gap-2">
+      {[28, 24].map((w, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-2 rounded-lg border border-ink-border bg-card p-2.5 shadow-raised-t"
+        >
+          <div className="h-3 w-3 rounded-full bg-ink-border" />
+          <SkelBar className="h-2.5" style={{ width: `${w * 4}px` } as React.CSSProperties} />
+        </div>
+      ))}
     </div>
   );
 }

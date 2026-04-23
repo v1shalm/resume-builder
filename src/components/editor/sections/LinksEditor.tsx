@@ -4,7 +4,7 @@ import { useResumeStore, temporalStore } from "@/lib/store";
 import { showToast } from "@/lib/toast";
 import { Input } from "@/components/ui/Input";
 import { SortableList, DragHandle } from "../SortableList";
-import { SectionHeader, EmptyState } from "./ExperienceEditor";
+import { SectionHeader, EmptyState, LinksSkeleton } from "./ExperienceEditor";
 import { Trash2 } from "lucide-react";
 import { useSfx } from "@/lib/useSfx";
 
@@ -18,12 +18,18 @@ export function LinksEditor() {
 
   return (
     <div className="flex flex-col gap-5">
-      <SectionHeader count={items.length} onAdd={add} addLabel="Add link" />
+      {items.length > 0 && (
+        <SectionHeader count={items.length} onAdd={add} addLabel="Add link" />
+      )}
       {items.length === 0 ? (
         <EmptyState
-          label="No links yet."
-          hint="Your portfolio, LinkedIn, Dribbble — whatever you want recruiters to see."
-        />
+          title="Add your links"
+          description="Portfolio first, LinkedIn, GitHub, Dribbble — where people should find you."
+          addLabel="Add link"
+          onAdd={add}
+        >
+          <LinksSkeleton />
+        </EmptyState>
       ) : (
         <SortableList
           items={items}

@@ -45,12 +45,20 @@ export function useUndoShortcuts() {
         if (temporal.pastStates.length === 0) return;
         e.preventDefault();
         temporal.undo();
-        showToast({ message: "Undone", duration: 1600 });
+        showToast({
+          message: "Undone",
+          duration: 2200,
+          action: { label: "Redo", onClick: () => getTemporal().redo() },
+        });
       } else if (isRedo) {
         if (temporal.futureStates.length === 0) return;
         e.preventDefault();
         temporal.redo();
-        showToast({ message: "Redone", duration: 1600 });
+        showToast({
+          message: "Redone",
+          duration: 2200,
+          action: { label: "Undo", onClick: () => getTemporal().undo() },
+        });
       }
     };
 

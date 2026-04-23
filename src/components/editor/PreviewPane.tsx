@@ -15,7 +15,9 @@ import {
   ChevronDown,
   ChevronRight,
   ListChecks,
+  Printer,
 } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/motion";
 
@@ -223,6 +225,12 @@ function getContentTips(resume: Resume): ReviewTip[] {
 // A4 at 96 dpi — kept in sync with ResumePreview.
 const PAGE_W = 794;
 const PAGE_H = 1123;
+// Safe print margins for the paper's content. Must match the
+// `padding` value applied inside ResumePreview (56px top / 60px
+// sides / 60px bottom).
+const MARGIN_T = 56;
+const MARGIN_X = 60;
+const MARGIN_B = 60;
 
 export function PreviewPane() {
   const resume = useResumeStore((s) => s.resume);
@@ -230,6 +238,11 @@ export function PreviewPane() {
   const play = useSfx();
   const [zoom, setZoom] = useState(0.82);
   const [fitMode, setFitMode] = useState(true);
+  // Print view hides the editor chrome (review pills) and reveals the
+  // PDF's safe-margin guides + a stronger page-break marker, so the
+  // user can sanity-check the page-break position against real content
+  // before exporting.
+  const [printView, setPrintView] = useState(false);
   // Which review popover is open. Only one at a time so the two pills
   // don't fight for space, and clicking outside either closes.
   const [openPanel, setOpenPanel] = useState<"overflow" | "quality" | null>(null);
@@ -361,8 +374,9 @@ export function PreviewPane() {
       {/* Review pills — overflow (amber, warning) and content-quality
           (neutral, informational). Stacked vertically when both present;
           click opens a popover with actionable tips that jump the editor
-          to the relevant section. */}
-      {(overflows || hasContentIssues) && (
+          to the relevant section. Hidden in print view so the paper
+          surface isn't cluttered when sanity-checking the PDF. */}
+      {!printView && (overflows || hasContentIssues) && (
         <div
           ref={reviewAnchorRef}
           className="absolute left-1/2 top-3 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5 sm:top-5"
@@ -494,11 +508,30 @@ export function PreviewPane() {
             }}
           >
             <ResumePreview ref={paperRef} resume={resume} />
-            {/* Page break markers — rendered inside the scaled wrapper
+
+            {/* Safe-margin guides — only in print view. A thin dashed
+                rectangle inset by the paper's padding so the user can
+                sanity-check which lines sit near the PDF's edge. */}
+            {printView && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute"
+                style={{
+                  top: MARGIN_T,
+                  bottom: MARGIN_B,
+                  left: MARGIN_X,
+                  right: MARGIN_X,
+                  border: "1px dashed oklch(0.55 0.08 250 / 0.35)",
+                }}
+              />
+            )}
+
+            {/* Page-break markers — rendered inside the scaled wrapper
                 so they move with the paper's zoom. A thin dashed rule
-                sits exactly on the 1123px boundary with a "Page N" tag
-                on the right. Purely informational; content flows
-                through them (print/PDF will actually break there). */}
+                sits exactly on the 1123px boundary with a "PAGE N" tag
+                on the right. In print view, the marker thickens and the
+                badge gains an arrow for stronger scan-ability; outside
+                print view it's a quieter amber hint. */}
             {overflows &&
               Array.from({ length: pageCount - 1 }, (_, i) => {
                 const top = (i + 1) * PAGE_H;
@@ -512,17 +545,31 @@ export function PreviewPane() {
                     <div
                       className="flex-1"
                       style={{
-                        borderTop:
-                          "1px dashed oklch(0.72 0.14 55 / 0.7)",
+                        borderTop: printView
+                          ? "1.5px dashed oklch(0.55 0.08 250 / 0.6)"
+                          : "1px dashed oklch(0.72 0.14 55 / 0.7)",
                       }}
                     />
                     <span
-                      className="ml-2 rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.06em] text-[oklch(0.32_0.14_55)]"
-                      style={{
-                        background: "oklch(0.93 0.11 85 / 0.95)",
-                        boxShadow:
-                          "0 0 0 1px oklch(0.72 0.14 55 / 0.6), 0 1px 2px oklch(0 0 0 / 0.15)",
-                      }}
+                      className={cn(
+                        "ml-2 rounded-sm font-mono font-semibold tracking-[0.06em]",
+                        printView
+                          ? "px-2 py-1 text-[10px] text-[oklch(0.35_0.08_250)]"
+                          : "px-1.5 py-0.5 text-[9px] text-[oklch(0.32_0.14_55)]",
+                      )}
+                      style={
+                        printView
+                          ? {
+                              background: "oklch(0.97 0.01 250 / 0.95)",
+                              boxShadow:
+                                "0 0 0 1px oklch(0.55 0.08 250 / 0.45), 0 1px 2px oklch(0 0 0 / 0.15)",
+                            }
+                          : {
+                              background: "oklch(0.93 0.11 85 / 0.95)",
+                              boxShadow:
+                                "0 0 0 1px oklch(0.72 0.14 55 / 0.6), 0 1px 2px oklch(0 0 0 / 0.15)",
+                            }
+                      }
                     >
                       PAGE {i + 2}
                     </span>
@@ -609,6 +656,33 @@ export function PreviewPane() {
           <Maximize2 className="h-3 w-3" aria-hidden />
           Fit
         </motion.button>
+
+        <div className="mx-0.5 h-4 w-px bg-ink-border" aria-hidden />
+
+        <Tooltip content={printView ? "Hide print guides" : "Show print guides"}>
+          <motion.button
+            onClick={() => {
+              play(printView ? "toggleOff" : "toggleOn");
+              setPrintView((v) => !v);
+            }}
+            whileTap={{ scale: 0.96, y: 0.5 }}
+            transition={spring.press}
+            aria-pressed={printView}
+            aria-label="Toggle print view"
+            className={cn(
+              "flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold transition-colors duration-fast",
+              printView
+                ? [
+                    "text-ink-text bg-card",
+                    "shadow-[inset_0_1px_0_var(--shadow-highlight),inset_0_-1px_0_var(--shadow-edge-dark),0_0_0_1px_var(--ink-border),0_1px_2px_var(--shadow-drop-close)]",
+                  ].join(" ")
+                : "text-ink-muted hover:bg-ink-hover hover:text-ink-text",
+            )}
+          >
+            <Printer className="h-3 w-3" aria-hidden />
+            <span className="hidden sm:inline">Print</span>
+          </motion.button>
+        </Tooltip>
       </motion.div>
     </div>
   );

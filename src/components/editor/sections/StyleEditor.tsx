@@ -65,8 +65,8 @@ export function StyleEditor() {
   const currentTarget = TARGETS.find((t) => t.id === target)!;
 
   return (
-    <section className="flex flex-col gap-6 border-t border-ink-border pt-6">
-      <div className="flex flex-col gap-1">
+    <section className="flex flex-col gap-8 border-t border-ink-border pt-7">
+      <div className="flex flex-col gap-1.5">
         <h3 className="text-[13px] font-semibold text-ink-text">
           Typography &amp; theme
         </h3>
@@ -76,7 +76,7 @@ export function StyleEditor() {
       </div>
 
       {/* FONTS */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         <Field label="Title font">
           <FontSelect
             value={style.titleFontId}
@@ -228,7 +228,7 @@ function SubGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
         <h4 className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
           {title}
@@ -237,7 +237,7 @@ function SubGroup({
           <span className="text-[11px] leading-[1.4] text-ink-subtle">{hint}</span>
         ) : null}
       </div>
-      <div className="flex flex-col gap-4">{children}</div>
+      <div className="flex flex-col gap-5">{children}</div>
     </div>
   );
 }

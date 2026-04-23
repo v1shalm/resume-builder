@@ -5,7 +5,7 @@ import { showToast } from "@/lib/toast";
 import { Input } from "@/components/ui/Input";
 import { SortableList, DragHandle } from "../SortableList";
 import { Field } from "./HeaderEditor";
-import { SectionHeader, EmptyState } from "./ExperienceEditor";
+import { SectionHeader, EmptyState, EducationSkeleton } from "./ExperienceEditor";
 import { Trash2 } from "lucide-react";
 import { useSfx } from "@/lib/useSfx";
 
@@ -19,12 +19,18 @@ export function EducationEditor() {
 
   return (
     <div className="flex flex-col gap-5">
-      <SectionHeader count={items.length} onAdd={add} addLabel="Add entry" />
+      {items.length > 0 && (
+        <SectionHeader count={items.length} onAdd={add} addLabel="Add entry" />
+      )}
       {items.length === 0 ? (
         <EmptyState
-          label="No education yet."
-          hint="Add degrees, certifications, or coursework that's relevant."
-        />
+          title="Add your education"
+          description="Degrees, bootcamps, certifications — whatever's most relevant first."
+          addLabel="Add entry"
+          onAdd={add}
+        >
+          <EducationSkeleton />
+        </EmptyState>
       ) : (
         <SortableList
           items={items}
@@ -60,7 +66,7 @@ export function EducationEditor() {
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-3 p-4">
+              <div className="grid grid-cols-2 gap-4 p-5">
                 <Field label="Field">
                   <Input
                     value={ed.field}

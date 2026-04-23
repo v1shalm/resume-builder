@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useResumeStore } from "@/lib/store";
 import type { SectionKind } from "@/lib/types";
 import { SortableList, DragHandle } from "./SortableList";
-import { ChevronDown, Eye, EyeOff } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/motion";
 import { useSfx } from "@/lib/useSfx";
@@ -29,21 +29,27 @@ export function SectionArranger() {
         }}
         aria-expanded={open}
         aria-controls="section-arranger-body"
-        className="flex w-full items-center justify-between px-5 py-3 text-left transition-colors duration-fast hover:bg-ink-hover"
+        className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-fast hover:bg-ink-hover"
       >
-        <div className="flex flex-col items-start gap-0.5">
+        <span
+          aria-hidden
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-ink-border bg-card text-ink-muted shadow-raised-t"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
           <span className="text-[12.5px] font-medium text-ink-text">
             Arrange sections
           </span>
-          <span className="text-[11.5px] text-ink-subtle">
-            {order.map((o) => sections[o].title).join(" · ")}
+          <span className="truncate text-[11.5px] text-ink-subtle">
+            Drag to reorder · show / hide — {order.length} sections
           </span>
         </div>
         <motion.span
           aria-hidden
           animate={{ rotate: open ? 180 : 0 }}
           transition={spring.snap}
-          className="flex"
+          className="flex shrink-0"
         >
           <ChevronDown className="h-4 w-4 text-ink-muted" />
         </motion.span>

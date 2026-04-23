@@ -69,13 +69,21 @@ export function Topbar() {
     const t = temporalStore.getState();
     if (t.pastStates.length === 0) return;
     t.undo();
-    showToast({ message: "Undone", duration: 1600 });
+    showToast({
+      message: "Undone",
+      duration: 2200,
+      action: { label: "Redo", onClick: () => temporalStore.getState().redo() },
+    });
   };
   const runRedo = () => {
     const t = temporalStore.getState();
     if (t.futureStates.length === 0) return;
     t.redo();
-    showToast({ message: "Redone", duration: 1600 });
+    showToast({
+      message: "Redone",
+      duration: 2200,
+      action: { label: "Undo", onClick: () => temporalStore.getState().undo() },
+    });
   };
 
   const openPalette = () => {
