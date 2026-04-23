@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 // Update SITE_URL to match your deployment once you ship. The
 // placeholder below lets `metadataBase` parse correctly during local
 // development without hard-coding a production URL.
-const SITE_URL = "https://resume-builder.vercel.app";
+const SITE_URL = "https://build-resume-vishal.vercel.app";
 const SITE_TITLE = "Resume Builder — A tactile, keyboard-first résumé editor";
 const SITE_DESC =
   "An open-source résumé builder with a live A4 preview, drag-and-drop sections, tactile audio feedback, and ATS-safe PDF export. Built with Next.js, React, and Tailwind.";
