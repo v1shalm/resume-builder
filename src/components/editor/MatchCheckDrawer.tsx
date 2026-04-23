@@ -27,9 +27,16 @@ import { matchCheck } from "@/lib/match-check";
  */
 export function MatchCheckDrawer() {
   const resume = useResumeStore((s) => s.resume);
-  const jd = useMatchStore((s) => s.jobDescription);
-  const setJd = useMatchStore((s) => s.setJobDescription);
-  const clearJd = useMatchStore((s) => s.clearJobDescription);
+  const currentVariantId = useResumeStore((s) => s.currentVariantId);
+  // Read the JD from the active variant's metadata — each resume
+  // variant has its own JD so tailoring one application doesn't
+  // affect another.
+  const jd = useResumeStore(
+    (s) => s.variantMeta[s.currentVariantId]?.jobDescription ?? "",
+  );
+  const setVariantJd = useResumeStore((s) => s.setVariantJd);
+  const setJd = (next: string) => setVariantJd(currentVariantId, next);
+  const clearJd = () => setVariantJd(currentVariantId, "");
   const setDrawerOpen = useMatchStore((s) => s.setDrawerOpen);
   const play = useSfx();
 

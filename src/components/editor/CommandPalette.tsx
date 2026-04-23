@@ -23,12 +23,15 @@ import {
   CornerDownLeft,
   Search,
   Target,
+  FileStack,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Kbd } from "@/components/ui/Kbd";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useResumeStore } from "@/lib/store";
 import { useMatchStore } from "@/lib/match-store";
+import { useSidebarStore } from "@/lib/sidebar-store";
 import { useTheme } from "@/lib/theme";
 import { useThemeSwap } from "@/lib/useThemeSwap";
 import { useSoundSettings } from "@/lib/soundSettings";
@@ -209,6 +212,23 @@ export function CommandPalette() {
         group: "actions",
         keywords: ["ats", "match", "keywords", "jd", "job", "tailor", "score", "check"],
         run: () => useMatchStore.getState().setDrawerOpen(true),
+      },
+      {
+        id: "variants-toggle",
+        label: "Resumes & templates",
+        hint: "⌘O",
+        icon: FileStack,
+        group: "actions",
+        keywords: ["variants", "resumes", "templates", "sidebar", "switch"],
+        run: () => useSidebarStore.getState().setCollapsed(false),
+      },
+      {
+        id: "variants-new",
+        label: "Duplicate this resume as a new variant",
+        icon: Copy,
+        group: "actions",
+        keywords: ["duplicate", "copy", "new", "variant", "fork"],
+        run: () => useResumeStore.getState().createVariant(),
       },
 
       {

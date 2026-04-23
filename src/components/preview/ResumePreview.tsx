@@ -153,58 +153,141 @@ const ResumePreviewInner = forwardRef<HTMLDivElement, Props>(function ResumePrev
         aria-hidden
       />
 
-      {/* Body grid */}
-      <div
-        className="mt-5 grid gap-x-12"
-        style={{ gridTemplateColumns: "1.55fr 1fr" }}
-      >
-        <div className="flex flex-col gap-9">
-          {leftVisible && (
-            <Section
-              title={sections.experience.title}
-              titleFamily={titleFamily}
-              accent={accent}
-              weight={style.sectionTitleWeight}
-              lineHeight={style.sectionTitleLineHeight}
-            >
-              <ExperienceList
-                resume={resume}
-                bodyFamily={bodyFamily}
-                bodyLH={bodyLH}
-                subAccent={subAccent}
-                subWeight={style.subTitleWeight}
-                subLH={style.subTitleLineHeight}
-                bodyWeight={style.bodyWeight}
-              />
-            </Section>
-          )}
-        </div>
+      {/* Body — branches on layoutId. Two-column keeps Experience
+          pinned left (the "primary" column), everything else right;
+          single-column stacks everything top-to-bottom in sectionOrder
+          and is the ATS-safe path. */}
+      {(resume.layoutId ?? "two-column") === "single-column" ? (
+        <SingleColumnBody
+          resume={resume}
+          titleFamily={titleFamily}
+          bodyFamily={bodyFamily}
+          accent={accent}
+          subAccent={subAccent}
+          bodyLH={bodyLH}
+        />
+      ) : (
+        <div
+          className="mt-5 grid gap-x-12"
+          style={{ gridTemplateColumns: "1.55fr 1fr" }}
+        >
+          <div className="flex flex-col gap-9">
+            {leftVisible && (
+              <Section
+                title={sections.experience.title}
+                titleFamily={titleFamily}
+                accent={accent}
+                weight={style.sectionTitleWeight}
+                lineHeight={style.sectionTitleLineHeight}
+              >
+                <ExperienceList
+                  resume={resume}
+                  bodyFamily={bodyFamily}
+                  bodyLH={bodyLH}
+                  subAccent={subAccent}
+                  subWeight={style.subTitleWeight}
+                  subLH={style.subTitleLineHeight}
+                  bodyWeight={style.bodyWeight}
+                />
+              </Section>
+            )}
+          </div>
 
-        <div className="flex flex-col gap-9">
-          {rightSections.map((id) => (
-            <Section
-              key={id}
-              title={sections[id].title}
-              titleFamily={titleFamily}
-              accent={accent}
-              weight={style.sectionTitleWeight}
-              lineHeight={style.sectionTitleLineHeight}
-            >
-              {renderSection(id, resume, {
-                bodyFamily,
-                bodyLH,
-                subAccent,
-                subWeight: style.subTitleWeight,
-                subLH: style.subTitleLineHeight,
-                bodyWeight: style.bodyWeight,
-              })}
-            </Section>
-          ))}
+          <div className="flex flex-col gap-9">
+            {rightSections.map((id) => (
+              <Section
+                key={id}
+                title={sections[id].title}
+                titleFamily={titleFamily}
+                accent={accent}
+                weight={style.sectionTitleWeight}
+                lineHeight={style.sectionTitleLineHeight}
+              >
+                {renderSection(id, resume, {
+                  bodyFamily,
+                  bodyLH,
+                  subAccent,
+                  subWeight: style.subTitleWeight,
+                  subLH: style.subTitleLineHeight,
+                  bodyWeight: style.bodyWeight,
+                })}
+              </Section>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });
+
+// ── Single-column body ───────────────────────────────────────────
+// ATS-safe layout: all sections stack top-to-bottom in the order the
+// user has set. Section headings sit directly above content (no grid,
+// no sidebar). Same `Section` + `renderSection` / `ExperienceList`
+// primitives as the two-column layout — just a different container.
+
+function SingleColumnBody({
+  resume,
+  titleFamily,
+  bodyFamily,
+  accent,
+  subAccent,
+  bodyLH,
+}: {
+  resume: Resume;
+  titleFamily: string;
+  bodyFamily: string;
+  accent: string;
+  subAccent: string;
+  bodyLH: number;
+}) {
+  const { sectionOrder, sections, style } = resume;
+  const hasItems = (id: SectionKind) => {
+    if (id === "experience") return resume.experience.length > 0;
+    if (id === "skills") return resume.skillGroups.length > 0;
+    if (id === "education") return resume.education.length > 0;
+    if (id === "links") return resume.links.length > 0;
+    return false;
+  };
+  const visible = sectionOrder.filter(
+    (id) => sections[id].visible && hasItems(id),
+  );
+  return (
+    <div className="mt-5 flex flex-col gap-9">
+      {visible.map((id) => (
+        <Section
+          key={id}
+          title={sections[id].title}
+          titleFamily={titleFamily}
+          accent={accent}
+          weight={style.sectionTitleWeight}
+          lineHeight={style.sectionTitleLineHeight}
+        >
+          {id === "experience" ? (
+            <ExperienceList
+              resume={resume}
+              bodyFamily={bodyFamily}
+              bodyLH={bodyLH}
+              subAccent={subAccent}
+              subWeight={style.subTitleWeight}
+              subLH={style.subTitleLineHeight}
+              bodyWeight={style.bodyWeight}
+            />
+          ) : (
+            renderSection(id, resume, {
+              bodyFamily,
+              bodyLH,
+              subAccent,
+              subWeight: style.subTitleWeight,
+              subLH: style.subTitleLineHeight,
+              bodyWeight: style.bodyWeight,
+            })
+          )}
+        </Section>
+      ))}
+    </div>
+  );
+}
 
 // Memoised on `resume` reference. Since zustand produces a new resume
 // object only when the resume actually changes, this skips re-renders

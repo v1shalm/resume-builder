@@ -7,6 +7,7 @@ import { EditorPanel } from "./EditorPanel";
 import { CommandPalette, OPEN_IMPORT_EVENT } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
 import { MatchCheckDrawer } from "./MatchCheckDrawer";
+import { VariantsSidebar } from "./VariantsSidebar";
 import { SoundRoot } from "@/components/providers/SoundRoot";
 import { Toaster } from "@/components/ui/Toaster";
 import { TooltipProvider } from "@/components/ui/Tooltip";
@@ -62,6 +63,7 @@ export function Editor() {
         <Toaster />
         <CommandPalette />
         <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
+        <VariantsSidebar />
       </div>
       </TooltipProvider>
     </SoundRoot>

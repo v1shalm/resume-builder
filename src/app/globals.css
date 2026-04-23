@@ -37,6 +37,10 @@
      restrained green that reads as "intentional" rather than a web-1.0
      success-toast bark. */
   --ink-success: oklch(0.58 0.14 150);
+  /* Tinted surfaces derived from --ink-success, used by the ATS-safe
+     badge pill in the templates tab. */
+  --success-border: oklch(0.58 0.12 150 / 0.35);
+  --success-bg: oklch(0.58 0.14 150 / 0.1);
 
   /* Primary CTA gradient tokens. The default is the "bright" form
      (was previously the hover state); hover settles back to a slightly
@@ -150,6 +154,8 @@
   --ink-accent-text: oklch(0.22 0.05 75);
   --ink-danger: oklch(0.66 0.17 25);
   --ink-success: oklch(0.68 0.14 150);
+  --success-border: oklch(0.68 0.12 150 / 0.4);
+  --success-bg: oklch(0.68 0.14 150 / 0.12);
 
   --ink-hover: oklch(0.285 0.007 250);
   --ink-hover-danger: oklch(0.26 0.06 25);

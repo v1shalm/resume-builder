@@ -89,6 +89,9 @@ export type Resume = {
   education: EducationItem[];
   links: LinkItem[];
   style: Style;
+  /** Which ResumePreview layout to render. Optional so pre-v2
+   *  persisted state keeps working — missing = "two-column". */
+  layoutId?: string;
 };
 
 export type EditorSelection =

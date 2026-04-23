@@ -18,6 +18,7 @@ import type {
   Style,
 } from "./types";
 import { seedResume } from "./seed";
+import { DEFAULT_TEMPLATE_ID, templateById } from "./templates";
 
 // Collapse rapid consecutive `set()` calls (e.g. each keystroke while
 // typing) into a single history entry. Without this, `⌘Z` would undo
@@ -44,14 +45,43 @@ const uid = () =>
     ? crypto.randomUUID().slice(0, 8)
     : Math.random().toString(36).slice(2, 10);
 
+// ── Variants ──────────────────────────────────────────────────────
+// Metadata per variant. Resume data for the ACTIVE variant lives at
+// the top-level `resume` field (so all existing actions keep writing
+// to one place). `variants` stores snapshots of the OTHER variants.
+// Swap pattern on switch: snapshot current `resume` into
+// `variants[currentVariantId]`, then load `variants[newId]` into
+// `resume` and set `currentVariantId = newId`.
+export type VariantMeta = {
+  label: string;
+  templateId: string;
+  /** Per-variant JD for ATS Match. Each application gets its own. */
+  jobDescription?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 type State = {
   resume: Resume;
   selection: EditorSelection;
+  variants: Record<string, Resume>;
+  variantMeta: Record<string, VariantMeta>;
+  variantOrder: string[];
+  currentVariantId: string;
 };
 
 type Actions = {
   select: (selection: EditorSelection) => void;
   reset: () => void;
+
+  // Variants
+  switchVariant: (id: string) => void;
+  createVariant: (opts?: { fromId?: string; label?: string; templateId?: string }) => string;
+  renameVariant: (id: string, label: string) => void;
+  deleteVariant: (id: string) => void;
+  reorderVariants: (fromId: string, toId: string) => void;
+  applyTemplate: (templateId: string) => void;
+  setVariantJd: (id: string, jd: string) => void;
 
   // Header
   updateHeader: (patch: Partial<Header>) => void;
@@ -102,6 +132,22 @@ type Actions = {
 
 type Store = State & Actions;
 
+/** Produce a duplicate label like "Product Designer copy" or
+ *  "Product Designer copy 2" so new variants don't silently collide
+ *  with their source name. */
+function deriveCopyLabel(
+  sourceLabel: string,
+  meta: Record<string, VariantMeta>,
+): string {
+  const base = sourceLabel.replace(/\s+copy(?:\s+\d+)?$/i, "").trim() || "Untitled";
+  const existing = new Set(Object.values(meta).map((m) => m.label));
+  const first = `${base} copy`;
+  if (!existing.has(first)) return first;
+  let n = 2;
+  while (existing.has(`${base} copy ${n}`)) n += 1;
+  return `${base} copy ${n}`;
+}
+
 const moveInArray = <T extends { id: string }>(
   arr: T[],
   fromId: string,
@@ -122,9 +168,178 @@ export const useResumeStore = create<Store>()(
       (set) => ({
       resume: seedResume,
       selection: { kind: "header" },
+      variants: {},
+      variantMeta: {
+        default: {
+          label: "Default",
+          templateId: DEFAULT_TEMPLATE_ID,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      },
+      variantOrder: ["default"],
+      currentVariantId: "default",
 
       select: (selection) => set({ selection }),
-      reset: () => set({ resume: seedResume, selection: { kind: "header" } }),
+      reset: () =>
+        set((s) => ({
+          resume: seedResume,
+          selection: { kind: "header" },
+          variantMeta: {
+            ...s.variantMeta,
+            [s.currentVariantId]: {
+              ...s.variantMeta[s.currentVariantId],
+              updatedAt: Date.now(),
+            },
+          },
+        })),
+
+      // ── Variants ─────────────────────────────────────────────
+      switchVariant: (id) =>
+        set((s) => {
+          if (id === s.currentVariantId) return {};
+          const snapshot = s.resume;
+          const incoming = s.variants[id];
+          if (!incoming) return {};
+          const { [id]: _loaded, ...remaining } = s.variants;
+          void _loaded;
+          return {
+            resume: incoming,
+            variants: { ...remaining, [s.currentVariantId]: snapshot },
+            currentVariantId: id,
+            // Reset selection so the editor doesn't show a stale id
+            // from the previous variant.
+            selection: { kind: "header" },
+          };
+        }),
+
+      createVariant: (opts = {}) => {
+        const newId = uid();
+        set((s) => {
+          const fromId = opts.fromId ?? s.currentVariantId;
+          const sourceResume =
+            fromId === s.currentVariantId ? s.resume : s.variants[fromId] ?? s.resume;
+          const sourceMeta = s.variantMeta[fromId];
+          const label =
+            opts.label ?? deriveCopyLabel(sourceMeta?.label ?? "Untitled", s.variantMeta);
+          const templateId = opts.templateId ?? sourceMeta?.templateId ?? DEFAULT_TEMPLATE_ID;
+
+          // Snapshot current resume into variants so switching to the
+          // new variant doesn't lose edits to the previous one.
+          const snapshot = s.resume;
+          // Deep-clone the source resume (structured clone) so the new
+          // variant is genuinely independent of the one it's copied
+          // from. JSON round-trip is fine for our schema.
+          const newResume: Resume = JSON.parse(JSON.stringify(sourceResume));
+          const now = Date.now();
+
+          return {
+            resume: newResume,
+            variants: {
+              ...s.variants,
+              [s.currentVariantId]: snapshot,
+            },
+            variantMeta: {
+              ...s.variantMeta,
+              [newId]: {
+                label,
+                templateId,
+                createdAt: now,
+                updatedAt: now,
+              },
+            },
+            variantOrder: [...s.variantOrder, newId],
+            currentVariantId: newId,
+            selection: { kind: "header" },
+          };
+        });
+        return newId;
+      },
+
+      renameVariant: (id, label) =>
+        set((s) => {
+          const meta = s.variantMeta[id];
+          if (!meta) return {};
+          return {
+            variantMeta: {
+              ...s.variantMeta,
+              [id]: { ...meta, label: label.trim() || meta.label, updatedAt: Date.now() },
+            },
+          };
+        }),
+
+      deleteVariant: (id) =>
+        set((s) => {
+          if (s.variantOrder.length <= 1) return {}; // keep at least one
+          const nextOrder = s.variantOrder.filter((x) => x !== id);
+          const { [id]: _removed, ...restMeta } = s.variantMeta;
+          void _removed;
+          const { [id]: _removedData, ...restData } = s.variants;
+          void _removedData;
+
+          if (id === s.currentVariantId) {
+            // Pick the neighbour to switch to (previous, else next).
+            const idx = s.variantOrder.indexOf(id);
+            const newCurrent = s.variantOrder[idx - 1] ?? s.variantOrder[idx + 1];
+            const incoming = restData[newCurrent];
+            if (!incoming) return {};
+            const { [newCurrent]: _consumed, ...remainingData } = restData;
+            void _consumed;
+            return {
+              resume: incoming,
+              variants: remainingData,
+              variantMeta: restMeta,
+              variantOrder: nextOrder,
+              currentVariantId: newCurrent,
+              selection: { kind: "header" },
+            };
+          }
+
+          return {
+            variants: restData,
+            variantMeta: restMeta,
+            variantOrder: nextOrder,
+          };
+        }),
+
+      reorderVariants: (fromId, toId) =>
+        set((s) => {
+          const from = s.variantOrder.indexOf(fromId);
+          const to = s.variantOrder.indexOf(toId);
+          if (from === -1 || to === -1 || from === to) return {};
+          const next = s.variantOrder.slice();
+          const [moved] = next.splice(from, 1);
+          next.splice(to, 0, moved);
+          return { variantOrder: next };
+        }),
+
+      applyTemplate: (templateId) =>
+        set((s) => {
+          const tpl = templateById(templateId);
+          return {
+            resume: { ...s.resume, style: tpl.style, layoutId: tpl.layoutId },
+            variantMeta: {
+              ...s.variantMeta,
+              [s.currentVariantId]: {
+                ...s.variantMeta[s.currentVariantId],
+                templateId,
+                updatedAt: Date.now(),
+              },
+            },
+          };
+        }),
+
+      setVariantJd: (id, jd) =>
+        set((s) => {
+          const meta = s.variantMeta[id];
+          if (!meta) return {};
+          return {
+            variantMeta: {
+              ...s.variantMeta,
+              [id]: { ...meta, jobDescription: jd, updatedAt: Date.now() },
+            },
+          };
+        }),
 
       updateHeader: (patch) =>
         set((s) => ({ resume: { ...s.resume, header: { ...s.resume.header, ...patch } } })),
@@ -470,15 +685,49 @@ export const useResumeStore = create<Store>()(
       },
     ),
     {
-      name: "resume-builder:v5",
-      version: 5,
-      // Only persist `resume` — undo history is intentionally
-      // session-scoped. Reload = clean slate, keeping localStorage
-      // predictable.
-      partialize: (s) => ({ resume: s.resume }),
+      name: "resume-builder:v6",
+      version: 6,
+      // Persist variants + active resume + metadata. Undo history is
+      // session-scoped (zundo's temporal state isn't in this slice).
+      partialize: (s) => ({
+        resume: s.resume,
+        variants: s.variants,
+        variantMeta: s.variantMeta,
+        variantOrder: s.variantOrder,
+        currentVariantId: s.currentVariantId,
+      }),
       migrate: (persistedState: unknown, version: number) => {
-        if (version < 5) return { resume: seedResume };
-        return persistedState as { resume: Resume };
+        const freshVariants = (): Pick<
+          State,
+          "variants" | "variantMeta" | "variantOrder" | "currentVariantId"
+        > => {
+          const now = Date.now();
+          const meta: Record<string, VariantMeta> = {
+            default: {
+              label: "Default",
+              templateId: DEFAULT_TEMPLATE_ID,
+              createdAt: now,
+              updatedAt: now,
+            },
+          };
+          return {
+            variants: {},
+            variantMeta: meta,
+            variantOrder: ["default"],
+            currentVariantId: "default",
+          };
+        };
+        // Pre-v5: unsupported shape, reseed.
+        if (version < 5) {
+          return { resume: seedResume, ...freshVariants() };
+        }
+        // v5 → v6: promote the single `resume` into the variants
+        // scheme with a "Default" variant labelled Navy Classic.
+        if (version < 6) {
+          const old = persistedState as { resume?: Resume };
+          return { resume: old.resume ?? seedResume, ...freshVariants() };
+        }
+        return persistedState as State;
       },
     },
   ),

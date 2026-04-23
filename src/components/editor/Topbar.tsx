@@ -11,6 +11,7 @@ import { Tooltip, Kbd } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store";
 import { useMatchStore } from "@/lib/match-store";
+import { useSidebarStore } from "@/lib/sidebar-store";
 import { useTheme } from "@/lib/theme";
 import { useThemeSwap } from "@/lib/useThemeSwap";
 import { useSfx } from "@/lib/useSfx";
@@ -56,6 +57,9 @@ export function Topbar() {
   // is read via `getState()` inside callbacks, so typing a bullet
   // doesn't re-render the whole topbar on every keystroke.
   const name = useResumeStore((s) => s.resume.header.name);
+  const activeVariantLabel = useResumeStore(
+    (s) => s.variantMeta[s.currentVariantId]?.label,
+  );
   const theme = useTheme((s) => s.theme);
   const swapTheme = useThemeSwap();
   const play = useSfx();
@@ -111,6 +115,17 @@ export function Topbar() {
       } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
         useMatchStore.getState().toggleDrawer();
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "o") {
+        e.preventDefault();
+        useSidebarStore.getState().toggleCollapsed();
+      } else if (
+        (e.metaKey || e.ctrlKey) &&
+        e.shiftKey &&
+        e.key.toLowerCase() === "n"
+      ) {
+        e.preventDefault();
+        useResumeStore.getState().createVariant();
+        useSidebarStore.getState().setCollapsed(false);
       }
     };
     const onOpenExport = () => {
@@ -159,7 +174,9 @@ export function Topbar() {
               ·
             </span>
             <span className="truncate text-[12.5px] text-ink-muted">
-              {name || "Untitled"}
+              {activeVariantLabel && activeVariantLabel !== "Default"
+                ? activeVariantLabel
+                : name || "Untitled"}
             </span>
             <SavedChip />
           </div>
