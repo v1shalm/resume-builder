@@ -1,0 +1,357 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   THEME TOKENS
+   Default :root is the LIGHT palette. Adding `.dark` to <html>
+   swaps in the dark palette. Every color, gradient stop, and
+   shadow alpha is derived from these variables so components
+   don't need to know which theme they're in.
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* Core surfaces */
+  --ink-bg: oklch(0.985 0.003 250);
+  --ink-bg-deep: oklch(0.97 0.004 250);
+  --ink-surface: oklch(0.982 0.003 250);
+  --ink-surface-hi: oklch(0.995 0.002 250);
+  --ink-raised: oklch(1 0 0);
+
+  /* Lines */
+  --ink-border: oklch(0.895 0.005 250);
+  --ink-border-strong: oklch(0.82 0.006 250);
+
+  /* Text */
+  --ink-text: oklch(0.2 0.008 250);
+  --ink-muted: oklch(0.48 0.008 250);
+  --ink-subtle: oklch(0.62 0.008 250);
+
+  /* Accent (brand yellow — same both themes) */
+  --ink-accent: oklch(0.855 0.165 85);
+  --ink-accent-text: oklch(0.22 0.05 75);
+  --ink-danger: oklch(0.56 0.19 25);
+
+  /* Hover surfaces — calibrated per theme so a hover is always visible.
+     In light mode `raised`/`surface` are near-white, so we step DOWN to a
+     clearly darker gray; in dark mode we step UP. Danger is a tinted red
+     so destructive hovers read as intent, not just brightness. */
+  --ink-hover: oklch(0.925 0.005 250);
+  --ink-hover-danger: oklch(0.945 0.045 25);
+
+  /* Body + canvas */
+  --body-top: oklch(0.995 0.002 250);
+  --body-bot: oklch(0.965 0.004 250);
+  --canvas-bg: oklch(0.93 0.005 250);
+  --canvas-dot: oklch(0.85 0.006 250);
+  --canvas-vignette: oklch(0.78 0.008 250 / 0.35);
+
+  /* Surface gradient stops (top → bottom) */
+  --grad-topbar-top: oklch(0.995 0.002 250);
+  --grad-topbar-bot: oklch(0.975 0.003 250);
+  --grad-panel-top: oklch(0.99 0.002 250);
+  --grad-panel-bot: oklch(0.972 0.003 250);
+  --grad-tabs-top: oklch(0.985 0.003 250);
+  --grad-tabs-bot: oklch(0.975 0.004 250);
+  --grad-card-top: oklch(1 0 0);
+  --grad-card-bot: oklch(0.975 0.004 250);
+  --grad-card-head-top: oklch(0.985 0.004 250);
+  --grad-card-head-bot: oklch(0.97 0.005 250);
+  /* Inputs are noticeably recessed vs panels to read as "punched in" */
+  --grad-input-top: oklch(0.925 0.004 250);
+  --grad-input-bot: oklch(0.965 0.004 250);
+  --grad-arranger-top: oklch(0.98 0.003 250);
+  --grad-arranger-bot: oklch(0.965 0.004 250);
+  --grad-overlay-top: oklch(0.995 0.002 250);
+  --grad-overlay-bot: oklch(0.975 0.004 250);
+
+  /* Dedicated input-only tokens for a crisper chip look */
+  --input-border: oklch(0.82 0.006 250);
+  --input-shadow-top: oklch(0 0 0 / 0.14);
+  --input-shadow-edge: oklch(0 0 0 / 0.06);
+  --input-focus-border: oklch(0.62 0.11 78);
+  --input-focus-ring: oklch(0.855 0.165 85 / 0.25);
+
+  /* Shadow alphas */
+  --shadow-highlight: oklch(1 0 0 / 0.65);
+  --shadow-edge-dark: oklch(0 0 0 / 0.08);
+  --shadow-drop-close: oklch(0 0 0 / 0.08);
+  --shadow-drop-mid: oklch(0 0 0 / 0.12);
+  --shadow-drop-far: oklch(0 0 0 / 0.15);
+
+  /* Scrollbar */
+  --scrollbar-thumb: oklch(0.8 0.006 250);
+  --scrollbar-thumb-hover: oklch(0.7 0.008 250);
+
+  /* Kbd chip inside primary button (tinted amber on both themes) */
+  --kbd-bg: oklch(0.78 0.15 80 / 0.45);
+  --kbd-border: oklch(0.55 0.12 75 / 0.55);
+  --kbd-text: oklch(0.22 0.05 75 / 0.9);
+
+  /* Slider tick marks */
+  --slider-tick: oklch(0.78 0.006 250);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --ink-bg: oklch(0.165 0.004 250);
+  --ink-bg-deep: oklch(0.128 0.004 250);
+  --ink-surface: oklch(0.208 0.005 250);
+  --ink-surface-hi: oklch(0.228 0.006 250);
+  --ink-raised: oklch(0.245 0.006 250);
+
+  --ink-border: oklch(0.295 0.007 250);
+  --ink-border-strong: oklch(0.36 0.008 250);
+
+  --ink-text: oklch(0.94 0.004 250);
+  --ink-muted: oklch(0.7 0.006 250);
+  --ink-subtle: oklch(0.55 0.006 250);
+
+  --ink-accent: oklch(0.855 0.165 85);
+  --ink-accent-text: oklch(0.22 0.05 75);
+  --ink-danger: oklch(0.66 0.17 25);
+
+  --ink-hover: oklch(0.285 0.007 250);
+  --ink-hover-danger: oklch(0.26 0.06 25);
+
+  --body-top: oklch(0.2 0.006 250);
+  --body-bot: oklch(0.165 0.004 250);
+  --canvas-bg: oklch(0.128 0.004 250);
+  --canvas-dot: oklch(0.32 0.008 250);
+  --canvas-vignette: oklch(0.11 0.004 250 / 0.6);
+
+  --grad-topbar-top: oklch(0.195 0.005 250);
+  --grad-topbar-bot: oklch(0.165 0.004 250);
+  --grad-panel-top: oklch(0.22 0.005 250);
+  --grad-panel-bot: oklch(0.208 0.005 250);
+  --grad-tabs-top: oklch(0.225 0.005 250);
+  --grad-tabs-bot: oklch(0.208 0.005 250);
+  --grad-card-top: oklch(0.21 0.005 250);
+  --grad-card-bot: oklch(0.188 0.005 250);
+  --grad-card-head-top: oklch(0.235 0.005 250);
+  --grad-card-head-bot: oklch(0.21 0.005 250);
+  --grad-input-top: oklch(0.145 0.004 250);
+  --grad-input-bot: oklch(0.165 0.004 250);
+  --grad-arranger-top: oklch(0.215 0.005 250);
+  --grad-arranger-bot: oklch(0.195 0.005 250);
+  --grad-overlay-top: oklch(0.23 0.005 250);
+  --grad-overlay-bot: oklch(0.205 0.005 250);
+
+  --shadow-highlight: oklch(1 0 0 / 0.045);
+  --shadow-edge-dark: oklch(0 0 0 / 0.35);
+  --shadow-drop-close: oklch(0 0 0 / 0.35);
+  --shadow-drop-mid: oklch(0 0 0 / 0.45);
+  --shadow-drop-far: oklch(0 0 0 / 0.55);
+
+  --scrollbar-thumb: oklch(0.3 0.008 250);
+  --scrollbar-thumb-hover: oklch(0.42 0.008 250);
+
+  --kbd-bg: oklch(0.78 0.15 80 / 0.4);
+  --kbd-border: oklch(0.55 0.12 75 / 0.5);
+  --kbd-text: oklch(0.22 0.05 75 / 0.8);
+
+  --slider-tick: oklch(0.42 0.008 250);
+
+  /* Inputs — dark-mode tuned (recessed well that reads on dark panels) */
+  --input-border: oklch(0.295 0.007 250);
+  --input-shadow-top: oklch(0 0 0 / 0.4);
+  --input-shadow-edge: oklch(0 0 0 / 0.25);
+  --input-focus-border: oklch(0.5 0.04 85 / 0.55);
+  --input-focus-ring: oklch(0.855 0.165 85 / 0.16);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      var(--body-top) 0%,
+      var(--body-bot) 60%
+    );
+    color: var(--ink-text);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: oklch(0.855 0.165 85 / 0.35);
+    color: var(--ink-text);
+  }
+
+  :focus-visible {
+    outline: 2px solid oklch(0.855 0.165 85 / 0.7);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 12px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+  }
+
+  textarea,
+  input {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}
+
+@layer components {
+  /* Surface utilities — use theme-aware gradient stops. */
+  .bg-topbar {
+    background: linear-gradient(
+      180deg,
+      var(--grad-topbar-top) 0%,
+      var(--grad-topbar-bot) 100%
+    );
+  }
+  .bg-panel {
+    background: linear-gradient(
+      180deg,
+      var(--grad-panel-top) 0%,
+      var(--grad-panel-bot) 100%
+    );
+  }
+  .bg-tabs {
+    background: linear-gradient(
+      180deg,
+      var(--grad-tabs-top) 0%,
+      var(--grad-tabs-bot) 100%
+    );
+  }
+  .bg-card {
+    background: linear-gradient(
+      180deg,
+      var(--grad-card-top) 0%,
+      var(--grad-card-bot) 100%
+    );
+  }
+  .bg-card-head {
+    background: linear-gradient(
+      180deg,
+      var(--grad-card-head-top) 0%,
+      var(--grad-card-head-bot) 100%
+    );
+  }
+  .bg-input {
+    background: linear-gradient(
+      180deg,
+      var(--grad-input-top) 0%,
+      var(--grad-input-bot) 100%
+    );
+  }
+  .bg-arranger {
+    background: linear-gradient(
+      180deg,
+      var(--grad-arranger-top) 0%,
+      var(--grad-arranger-bot) 100%
+    );
+  }
+  .bg-overlay {
+    background: linear-gradient(
+      180deg,
+      var(--grad-overlay-top) 0%,
+      var(--grad-overlay-bot) 100%
+    );
+  }
+
+  /* Theme-aware elevation shadows */
+  .shadow-raised-t {
+    box-shadow:
+      inset 0 1px 0 var(--shadow-highlight),
+      0 1px 0 0 var(--shadow-edge-dark),
+      0 1px 2px -1px var(--shadow-drop-close);
+  }
+  .shadow-panel-t {
+    box-shadow:
+      inset 0 1px 0 var(--shadow-highlight),
+      0 2px 4px -2px var(--shadow-drop-close);
+  }
+  .shadow-well-t {
+    box-shadow: inset 0 1.5px 2px var(--input-shadow-top);
+  }
+  .shadow-overlay-t {
+    box-shadow:
+      inset 0 1px 0 var(--shadow-highlight),
+      0 20px 44px -12px var(--shadow-drop-far),
+      0 6px 12px -6px var(--shadow-drop-mid);
+  }
+  .shadow-paper-t {
+    box-shadow:
+      0 0 0 1px var(--ink-border),
+      0 2px 4px -2px var(--shadow-drop-mid),
+      0 18px 32px -10px var(--shadow-drop-far),
+      0 36px 60px -24px var(--shadow-drop-mid);
+  }
+  .shadow-topbar-t {
+    box-shadow:
+      inset 0 1px 0 var(--shadow-highlight),
+      0 1px 0 0 var(--shadow-edge-dark),
+      0 6px 12px -8px var(--shadow-drop-close);
+  }
+
+  /* Resume paper — stays light in both themes */
+  .paper {
+    background: oklch(0.985 0.004 85);
+    color: oklch(0.22 0.008 260);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+
+  /* Rule with fading edges — theme-aware */
+  .rule-fade {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--ink-border) 18%,
+      var(--ink-border-strong) 50%,
+      var(--ink-border) 82%,
+      transparent 100%
+    );
+  }
+  .rule-fade-v {
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--ink-border) 18%,
+      var(--ink-border-strong) 50%,
+      var(--ink-border) 82%,
+      transparent 100%
+    );
+  }
+}
