@@ -129,7 +129,7 @@ export function MatchCheckDrawer() {
           type="button"
           onClick={close}
           aria-label="Close ATS match"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text sm:h-7 sm:w-7"
         >
           <X className="h-3.5 w-3.5" aria-hidden />
         </button>
@@ -157,6 +157,11 @@ export function MatchCheckDrawer() {
               ref={textareaRef}
               value={jd}
               onChange={(e) => setJd(e.target.value)}
+              onFocus={(e) => {
+                // Scroll the textarea into view when the mobile
+                // keyboard opens so it doesn't hide the paste target.
+                e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+              }}
               placeholder="Paste a job description here. We'll pull out the salient terms and show what's missing from your resume."
               spellCheck={false}
               rows={6}

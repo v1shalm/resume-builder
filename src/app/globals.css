@@ -226,6 +226,24 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Safe-area insets — bump left/right padding on fixed elements
+     that sit at the edge of the viewport so they don't land under
+     the notch / Dynamic Island in landscape. Uses `max()` so the
+     existing padding wins when there's no safe area. */
+  .safe-px {
+    padding-left: max(var(--safe-px-default, 12px), env(safe-area-inset-left));
+    padding-right: max(var(--safe-px-default, 12px), env(safe-area-inset-right));
+  }
+  .safe-left {
+    left: max(12px, env(safe-area-inset-left));
+  }
+  .safe-top {
+    top: max(0px, env(safe-area-inset-top));
+  }
+  .safe-bottom {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
   ::selection {
     background: oklch(0.855 0.165 85 / 0.35);
     color: var(--ink-text);

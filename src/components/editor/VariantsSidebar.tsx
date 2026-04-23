@@ -54,6 +54,20 @@ export function VariantsSidebar() {
   const setCollapsed = useSidebarStore((s) => s.setCollapsed);
   const play = useSfx();
 
+  // On first mount, force-collapse on mobile viewports where an
+  // expanded 280px sidebar would crowd out the preview + editor.
+  // Desktop users keep whatever state was persisted (defaults to
+  // expanded); mobile users start with the pill and explicitly opt
+  // in to the panel.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(max-width: 767px)").matches && !collapsed) {
+      setCollapsed(true);
+    }
+    // Only on mount — we don't want to re-collapse on every resize.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const expand = () => {
     play("modalOpen");
     setCollapsed(false);
@@ -110,12 +124,13 @@ export function VariantsSidebar() {
             : { opacity: 1, x: 0, filter: "blur(0px)" }
         }
         transition={spring.soft}
-        style={{
-          width: SIDEBAR_WIDTH,
-          pointerEvents: collapsed ? "none" : "auto",
-        }}
+        style={{ pointerEvents: collapsed ? "none" : "auto" }}
         className={cn(
-          "fixed bottom-3 left-3 top-[4.5rem] z-30 flex flex-col overflow-hidden rounded-xl border border-ink-border bg-panel",
+          // Width: capped at 280px with a safety fallback for very
+          // narrow viewports (<320px) so the sidebar never overflows
+          // the screen. Same formula works everywhere — no breakpoint
+          // juggling.
+          "fixed bottom-3 left-3 top-[4.5rem] z-30 flex w-[min(calc(100vw-24px),280px)] flex-col overflow-hidden rounded-xl border border-ink-border bg-panel",
           // Raised floating card (Figma-style) — distinct from the
           // editor chrome, reads as a detachable panel above canvas.
           "shadow-[inset_0_1px_0_var(--shadow-highlight),0_2px_4px_var(--shadow-drop-close),0_18px_44px_-10px_var(--shadow-drop-far),0_8px_20px_-8px_var(--shadow-drop-mid)]",
@@ -207,7 +222,7 @@ function Header({ onCollapse }: { onCollapse: () => void }) {
         type="button"
         onClick={onCollapse}
         aria-label="Collapse sidebar"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text"
+        className="flex h-9 w-9 items-center justify-center rounded-md text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text sm:h-7 sm:w-7"
       >
         <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
       </button>
@@ -515,13 +530,16 @@ function VariantActions({
   onDelete: () => void;
   canDelete: boolean;
 }) {
+  // On touch devices these always show (no hover); on desktop
+  // they appear on group-hover / focus. Mobile tap targets are
+  // h-8 (32px); desktop shrinks to h-6 (24px) where hover works.
   return (
-    <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-fast group-hover:opacity-100 focus-within:opacity-100">
+    <div className="flex shrink-0 items-center gap-0.5 transition-opacity duration-fast sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
       <button
         type="button"
         onClick={onRename}
         aria-label="Rename"
-        className="flex h-6 w-6 items-center justify-center rounded-[4px] text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text"
+        className="flex h-8 w-8 items-center justify-center rounded-[4px] text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text sm:h-6 sm:w-6"
       >
         <Pencil className="h-3 w-3" aria-hidden />
       </button>
@@ -530,7 +548,7 @@ function VariantActions({
           type="button"
           onClick={onDelete}
           aria-label="Delete"
-          className="flex h-6 w-6 items-center justify-center rounded-[4px] text-ink-subtle transition-colors duration-fast hover:bg-ink-hoverDanger hover:text-ink-danger"
+          className="flex h-8 w-8 items-center justify-center rounded-[4px] text-ink-subtle transition-colors duration-fast hover:bg-ink-hoverDanger hover:text-ink-danger sm:h-6 sm:w-6"
         >
           <Trash2 className="h-3 w-3" aria-hidden />
         </button>

@@ -237,18 +237,22 @@ export function Topbar() {
           />
 
           {/* entry + theme */}
+          {/* Always-visible palette entry. On mobile it becomes an
+              icon-only button (touch target h-9); from sm+ it expands
+              to the Linear-style pill with the ⌘K hint. */}
           <button
             type="button"
             onClick={openPalette}
             aria-label="Open command palette"
             className={cn(
-              "hidden h-7 items-center gap-2 rounded-md border border-ink-border bg-ink-surface pl-2 pr-1.5 text-[11.5px] text-ink-subtle transition-colors duration-fast sm:inline-flex",
+              "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-ink-border bg-ink-surface px-2 text-[11.5px] text-ink-subtle transition-colors duration-fast",
               "shadow-well-t hover:border-ink-border-strong hover:text-ink-muted",
+              "sm:h-7 sm:pl-2 sm:pr-1.5",
             )}
           >
-            <Search className="h-3 w-3" aria-hidden />
-            <span>Search</span>
-            <Kbd size="sm">⌘K</Kbd>
+            <Search className="h-3.5 w-3.5 sm:h-3 sm:w-3" aria-hidden />
+            <span className="hidden sm:inline">Search</span>
+            <Kbd size="sm" className="hidden sm:inline-flex">⌘K</Kbd>
           </button>
 
           <Tooltip content={theme === "dark" ? "Light mode" : "Dark mode"}>

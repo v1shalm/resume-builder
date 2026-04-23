@@ -18,7 +18,8 @@ export function Toaster() {
     <div
       aria-live="polite"
       aria-atomic="true"
-      className="pointer-events-none fixed inset-x-0 bottom-5 z-[70] flex items-end justify-center px-4 sm:bottom-8"
+      className="pointer-events-none fixed inset-x-0 z-[70] flex items-end justify-center px-4 sm:bottom-8"
+      style={{ bottom: "max(20px, env(safe-area-inset-bottom))" }}
     >
       <AnimatePresence mode="wait">
         {toast && (

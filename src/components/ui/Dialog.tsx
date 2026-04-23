@@ -68,7 +68,10 @@ export const DialogContent = React.forwardRef<
               animate="show"
               exit="exit"
               className={cn(
-                "fixed left-1/2 top-1/2 z-50 w-full max-w-[480px] overflow-hidden rounded-2xl border border-ink-border bg-overlay",
+                // `w-[calc(100vw-24px)]` keeps a 12px margin on every side on
+                // narrow viewports. Cap at 480px for desktop. Prevents the
+                // edge-to-edge dialog look on phones.
+                "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-24px)] max-w-[480px] overflow-hidden rounded-2xl border border-ink-border bg-overlay",
                 "shadow-[inset_0_1px_0_var(--shadow-highlight),0_24px_64px_-16px_var(--shadow-drop-far),0_10px_24px_-8px_var(--shadow-drop-mid)]",
                 className,
               )}

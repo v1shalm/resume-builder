@@ -88,6 +88,10 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // `viewport-fit=cover` lets us read `env(safe-area-inset-*)` so
+  // fixed elements (Topbar, sidebar pill, Toaster) can pad around
+  // notches / Dynamic Island on iPhone X+.
+  viewportFit: "cover",
 };
 
 // Apply the persisted theme class to <html> BEFORE React hydrates, so the
