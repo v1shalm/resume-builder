@@ -3,6 +3,7 @@
 import { useResumeStore, temporalStore } from "@/lib/store";
 import { showToast } from "@/lib/toast";
 import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { SortableList, DragHandle } from "../SortableList";
 import { Field } from "./HeaderEditor";
 import { SectionHeader, EmptyState, EducationSkeleton } from "./ExperienceEditor";
@@ -36,8 +37,8 @@ export function EducationEditor() {
           items={items}
           onReorder={reorder}
           renderItem={(ed, { dragAttrs, dragListeners }) => (
-            <article className="group flex flex-col overflow-hidden rounded-xl border border-ink-border bg-card shadow-raised-t">
-              <div className="flex items-center gap-2 border-b border-ink-border bg-card-head px-2.5 py-2 shadow-[inset_0_1px_0_var(--shadow-highlight)]">
+            <Card className="group flex flex-col">
+              <CardHeader>
                 <DragHandle dragAttrs={dragAttrs} dragListeners={dragListeners} />
                 <Input
                   aria-label="Degree"
@@ -65,8 +66,8 @@ export function EducationEditor() {
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-5">
+              </CardHeader>
+              <CardBody className="grid grid-cols-2 gap-4">
                 <Field label="Field">
                   <Input
                     value={ed.field}
@@ -90,8 +91,8 @@ export function EducationEditor() {
                     />
                   </Field>
                 </div>
-              </div>
-            </article>
+              </CardBody>
+            </Card>
           )}
         />
       )}

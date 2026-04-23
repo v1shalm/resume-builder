@@ -6,6 +6,8 @@ import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Tooltip, Kbd } from "@/components/ui/Tooltip";
+// Topbar uses the shared Kbd primitive for both the ⌘K chip and the
+// ⌘E hint on Export PDF — same vocabulary, different tones.
 import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
@@ -23,7 +25,7 @@ import { OPEN_EXPORT_EVENT, OPEN_PALETTE_EVENT } from "./CommandPalette";
 const loadExportDialog = () =>
   import("./ExportDialog").then((m) => ({ default: m.ExportDialog }));
 const ExportDialog = dynamic(loadExportDialog, { ssr: false });
-import { Download, Sun, Moon, Undo2, Redo2, Command } from "lucide-react";
+import { Download, Sun, Moon, Undo2, Redo2, Search } from "lucide-react";
 import { spring, stagger, rowFadeUp } from "@/lib/motion";
 
 type TemporalApi = {
@@ -219,14 +221,9 @@ export function Topbar() {
               "shadow-well-t hover:border-ink-border-strong hover:text-ink-muted",
             )}
           >
-            <Command className="h-3 w-3" aria-hidden />
+            <Search className="h-3 w-3" aria-hidden />
             <span>Search</span>
-            <kbd
-              aria-hidden
-              className="flex h-[18px] items-center justify-center gap-[1px] rounded-[4px] border border-ink-border bg-ink-bg px-1 font-mono text-[9.5px] font-semibold leading-none text-ink-muted"
-            >
-              <span>⌘</span>K
-            </kbd>
+            <Kbd size="sm">⌘K</Kbd>
           </button>
 
           <Tooltip content={theme === "dark" ? "Light mode" : "Dark mode"}>
@@ -270,26 +267,22 @@ export function Topbar() {
             aria-hidden
           />
 
-          {/* primary CTA */}
+          {/* primary CTA — size-md matches the row's rhythm; the amber
+              gradient on `variant="primary"` carries the visual
+              prominence without needing extra height. */}
           <Button
             variant="primary"
-            size="lg"
+            size="md"
             onClick={() => setExportOpen(true)}
             onMouseEnter={prefetchExport}
             onFocus={prefetchExport}
             aria-label="Export PDF"
-            className="px-3 sm:px-4"
+            className="px-3"
           >
             <Download className="h-3.5 w-3.5" aria-hidden />
             <span className="hidden sm:inline">Export PDF</span>
             <span className="sm:hidden">Export</span>
-            <kbd
-              aria-label="keyboard shortcut Command E"
-              className="ml-1 hidden h-[22px] items-center justify-center gap-[3px] rounded-[6px] border border-[var(--kbd-border)] bg-[var(--kbd-bg)] px-[7px] text-[11px] font-semibold leading-none text-[var(--kbd-text)] md:inline-flex"
-            >
-              <span className="text-[11.5px] leading-none">⌘</span>
-              <span className="leading-none">E</span>
-            </kbd>
+            <Kbd size="sm" tone="onPrimary" className="ml-1 hidden md:inline-flex">⌘E</Kbd>
           </Button>
         </motion.div>
       </motion.header>

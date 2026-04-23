@@ -33,6 +33,24 @@
   --ink-accent: oklch(0.855 0.165 85);
   --ink-accent-text: oklch(0.22 0.05 75);
   --ink-danger: oklch(0.56 0.19 25);
+  /* Positive confirmation (saved chip ✓, validated contact ✓) — a
+     restrained green that reads as "intentional" rather than a web-1.0
+     success-toast bark. */
+  --ink-success: oklch(0.58 0.14 150);
+
+  /* Warn pill tokens — the overflow pill's amber chrome. Separate
+     from --ink-accent because warnings need more saturation to read
+     as a callout vs a button surface. */
+  --warn-border: oklch(0.72 0.14 55 / 0.5);
+  --warn-bg: oklch(0.93 0.11 85 / 0.9);
+  --warn-bg-hover: oklch(0.94 0.12 85 / 0.95);
+  --warn-ring: oklch(0.72 0.14 55 / 0.45);
+  --warn-text: oklch(0.28 0.14 55);
+  /* Rendered inside print-hint page-break markers */
+  --warn-rule: oklch(0.72 0.14 55 / 0.7);
+  --warn-badge-bg: oklch(0.93 0.11 85 / 0.95);
+  --warn-badge-ring: oklch(0.72 0.14 55 / 0.6);
+  --warn-badge-text: oklch(0.32 0.14 55);
 
   /* Hover surfaces — calibrated per theme so a hover is always visible.
      In light mode `raised`/`surface` are near-white, so we step DOWN to a
@@ -113,6 +131,7 @@
   --ink-accent: oklch(0.855 0.165 85);
   --ink-accent-text: oklch(0.22 0.05 75);
   --ink-danger: oklch(0.66 0.17 25);
+  --ink-success: oklch(0.68 0.14 150);
 
   --ink-hover: oklch(0.285 0.007 250);
   --ink-hover-danger: oklch(0.26 0.06 25);

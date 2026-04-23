@@ -98,8 +98,6 @@ export function HeaderEditor() {
         />
       </section>
 
-      <div className="rule-fade" aria-hidden />
-
       <StyleEditor />
     </div>
   );
@@ -198,7 +196,7 @@ function ContactRow({
             the inline icon to signal state. */}
         {contact.value.trim() && !validationMsg && kind !== "text" && (
           <Check
-            className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-[oklch(0.58_0.14_150)]"
+            className="pointer-events-none absolute right-2 h-3.5 w-3.5 text-[var(--ink-success)]"
             aria-hidden
           />
         )}

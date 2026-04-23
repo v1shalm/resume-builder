@@ -4,6 +4,7 @@ import { useResumeStore, temporalStore } from "@/lib/store";
 import { showToast } from "@/lib/toast";
 import { Input } from "@/components/ui/Input";
 import { TokenInput } from "@/components/ui/TokenInput";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { SortableList, DragHandle } from "../SortableList";
 import { SectionHeader, EmptyState, SkillsSkeleton } from "./ExperienceEditor";
 import { Trash2 } from "lucide-react";
@@ -37,8 +38,8 @@ export function SkillsEditor() {
           items={groups}
           onReorder={reorder}
           renderItem={(g, { dragAttrs, dragListeners }) => (
-            <article className="group flex flex-col overflow-hidden rounded-xl border border-ink-border bg-card shadow-raised-t">
-              <div className="flex items-center gap-2 border-b border-ink-border bg-card-head px-2.5 py-2 shadow-[inset_0_1px_0_var(--shadow-highlight)]">
+            <Card className="group flex flex-col">
+              <CardHeader>
                 <DragHandle dragAttrs={dragAttrs} dragListeners={dragListeners} />
                 <Input
                   aria-label="Group name"
@@ -66,8 +67,8 @@ export function SkillsEditor() {
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
-              </div>
-              <div className="p-5">
+              </CardHeader>
+              <CardBody>
                 <TokenInput
                   aria-label={`Skills in ${g.label || "this group"}`}
                   value={g.items}
@@ -75,8 +76,8 @@ export function SkillsEditor() {
                   suggestions={SKILL_SUGGESTIONS}
                   placeholder="Type a skill and press Enter…"
                 />
-              </div>
-            </article>
+              </CardBody>
+            </Card>
           )}
         />
       )}

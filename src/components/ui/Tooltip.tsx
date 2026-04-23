@@ -73,14 +73,6 @@ export function Tooltip({
   );
 }
 
-/** Small mono kbd chip for inline use inside Tooltip content. */
-export function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd
-      aria-hidden
-      className="inline-flex h-[16px] items-center justify-center rounded-[4px] border border-ink-border bg-ink-surface px-1 font-mono text-[9.5px] font-semibold leading-none text-ink-muted"
-    >
-      {children}
-    </kbd>
-  );
-}
+// Re-export the shared Kbd primitive so consumers can
+// `import { Tooltip, Kbd }` from one place.
+export { Kbd } from "./Kbd";

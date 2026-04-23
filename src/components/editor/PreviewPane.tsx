@@ -385,9 +385,9 @@ export function PreviewPane() {
                   aria-controls="overflow-tips"
                   className={cn(
                     "flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11.5px] font-medium backdrop-blur-md transition-colors duration-fast",
-                    "border-[oklch(0.72_0.14_55_/_0.5)] bg-[oklch(0.93_0.11_85_/_0.9)] text-[oklch(0.28_0.14_55)]",
+                    "border-[var(--warn-border)] bg-[var(--warn-bg)] text-[var(--warn-text)]",
                     "shadow-[0_1px_2px_var(--shadow-drop-close),0_6px_16px_-4px_var(--shadow-drop-far)]",
-                    "hover:bg-[oklch(0.94_0.12_85_/_0.95)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.14_55_/_0.45)]",
+                    "hover:bg-[var(--warn-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--warn-ring)]",
                   )}
                 >
                   <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
@@ -512,16 +512,14 @@ export function PreviewPane() {
                   >
                     <div
                       className="flex-1"
-                      style={{
-                        borderTop: "1px dashed oklch(0.72 0.14 55 / 0.7)",
-                      }}
+                      style={{ borderTop: "1px dashed var(--warn-rule)" }}
                     />
                     <span
-                      className="ml-2 rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.06em] text-[oklch(0.32_0.14_55)]"
+                      className="ml-2 rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.06em] text-[var(--warn-badge-text)]"
                       style={{
-                        background: "oklch(0.93 0.11 85 / 0.95)",
+                        background: "var(--warn-badge-bg)",
                         boxShadow:
-                          "0 0 0 1px oklch(0.72 0.14 55 / 0.6), 0 1px 2px oklch(0 0 0 / 0.15)",
+                          "0 0 0 1px var(--warn-badge-ring), 0 1px 2px var(--shadow-drop-close)",
                       }}
                     >
                       PAGE {i + 2}

@@ -4,6 +4,9 @@ import type React from "react";
 import { useResumeStore, temporalStore } from "@/lib/store";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SortableList, DragHandle } from "../SortableList";
 import { BulletField } from "../BulletField";
 import { Field } from "./HeaderEditor";
@@ -47,8 +50,8 @@ export function ExperienceEditor() {
           items={items}
           onReorder={reorderExperience}
           renderItem={(exp, { dragAttrs, dragListeners }) => (
-            <article className="group flex flex-col overflow-hidden rounded-xl border border-ink-border bg-card shadow-raised-t">
-              <div className="flex items-center gap-2 border-b border-ink-border bg-card-head px-2.5 py-2 shadow-[inset_0_1px_0_var(--shadow-highlight)]">
+            <Card className="group flex flex-col">
+              <CardHeader>
                 <DragHandle dragAttrs={dragAttrs} dragListeners={dragListeners} />
                 <Input
                   aria-label="Company"
@@ -76,9 +79,9 @@ export function ExperienceEditor() {
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                 </button>
-              </div>
+              </CardHeader>
 
-              <div className="flex flex-col gap-5 p-5">
+              <CardBody className="flex flex-col gap-5">
                 <Field label="Role">
                   <Input
                     value={exp.role}
@@ -106,9 +109,7 @@ export function ExperienceEditor() {
 
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11.5px] font-medium uppercase tracking-[0.08em] text-ink-muted">
-                      Bullets
-                    </span>
+                    <SectionLabel size="md" tone="muted">Bullets</SectionLabel>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -153,8 +154,8 @@ export function ExperienceEditor() {
                     )}
                   />
                 </div>
-              </div>
-            </article>
+              </CardBody>
+            </Card>
           )}
         />
       )}
@@ -174,9 +175,9 @@ export function SectionHeader({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-baseline gap-2.5">
-        <span className="text-[11.5px] font-medium uppercase tracking-[0.08em] text-ink-muted tabular-nums">
+        <SectionLabel size="md" tone="muted" className="tabular-nums">
           {count === 1 ? "1 item" : `${count} items`}
-        </span>
+        </SectionLabel>
       </div>
       <Button variant="secondary" size="md" sound="add" onClick={onAdd}>
         <Plus className="h-3.5 w-3.5" aria-hidden />
@@ -186,52 +187,9 @@ export function SectionHeader({
   );
 }
 
-/**
- * Per-section empty state. A dashed-border card that pairs:
- *   · a skeleton "ghost" of what a real entry looks like (children)
- *   · a short title + description with role-specific micro-copy
- *   · a primary "+ Add…" CTA
- * so first-time users get a preview of the shape they're building
- * toward, not just a blank slate.
- */
-export function EmptyState({
-  title,
-  description,
-  addLabel,
-  onAdd,
-  children,
-}: {
-  title: string;
-  description: string;
-  addLabel: string;
-  onAdd: () => void;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="relative flex flex-col gap-5 overflow-hidden rounded-xl border border-dashed border-ink-border bg-hatch p-5">
-      {children && (
-        <div
-          aria-hidden
-          className="pointer-events-none relative opacity-40 [mask-image:linear-gradient(180deg,oklch(0_0_0)_0%,oklch(0_0_0_/_0.5)_80%,transparent_100%)]"
-        >
-          {children}
-        </div>
-      )}
-      <div className="relative flex flex-col gap-1.5">
-        <span className="text-[13.5px] font-medium text-ink-text">{title}</span>
-        <span className="text-[12.5px] leading-[1.5] text-ink-muted">
-          {description}
-        </span>
-      </div>
-      <div className="relative">
-        <Button variant="primary" size="md" sound="add" onClick={onAdd}>
-          <Plus className="h-3.5 w-3.5" aria-hidden />
-          {addLabel}
-        </Button>
-      </div>
-    </div>
-  );
-}
+// Backwards-compat re-export so existing section imports still work.
+// New code should import directly from `@/components/ui/EmptyState`.
+export { EmptyState } from "@/components/ui/EmptyState";
 
 // ── Skeletons ───────────────────────────────────────────────────────
 // Non-interactive visual scaffolds shown behind the empty-state copy.

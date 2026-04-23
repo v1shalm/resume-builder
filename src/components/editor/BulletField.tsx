@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { CharCount } from "@/components/ui/CharCount";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/motion";
 
@@ -105,9 +106,7 @@ export function BulletField({
             className="overflow-hidden"
           >
             <div className="flex flex-wrap items-center gap-1 pt-0.5">
-              <span className="pr-1 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-subtle">
-                Start with
-              </span>
+              <SectionLabel size="sm" className="pr-1">Start with</SectionLabel>
               {STARTER_VERBS.map((verb) => (
                 <motion.button
                   key={verb}

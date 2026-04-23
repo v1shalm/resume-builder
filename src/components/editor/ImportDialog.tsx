@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store";
 import { useSfx } from "@/lib/useSfx";
@@ -212,9 +213,7 @@ export function ImportDialog({ open, onOpenChange }: Props) {
 
                 {result && (
                   <div className="flex flex-col gap-2 rounded-xl border border-ink-border bg-ink-surface/60 p-3">
-                    <div className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">
-                      What we found
-                    </div>
+                    <SectionLabel size="xs">What we found</SectionLabel>
                     <div className="grid grid-cols-3 gap-2">
                       <StatCell
                         value={result.resume.experience.length}
@@ -301,14 +300,13 @@ function FieldLabel({
   align?: "center" | "start";
 }) {
   return (
-    <label
-      className={cn(
-        "font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-ink-subtle",
-        align === "center" ? "pt-[11px]" : "pt-2.5",
-      )}
+    <SectionLabel
+      as="label"
+      size="xs"
+      className={cn(align === "center" ? "pt-[11px]" : "pt-2.5")}
     >
       {children}
-    </label>
+    </SectionLabel>
   );
 }
 

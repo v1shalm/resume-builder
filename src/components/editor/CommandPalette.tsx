@@ -24,6 +24,8 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Kbd } from "@/components/ui/Kbd";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useResumeStore } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { useThemeSwap } from "@/lib/useThemeSwap";
@@ -477,10 +479,12 @@ export function CommandPalette() {
                         row.kind === "header" ? (
                           <li
                             key={`h-${row.group}`}
-                            className="mt-3 px-2 pb-1.5 pt-1 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-ink-subtle first:mt-1"
+                            className="mt-3 px-2 pb-1.5 pt-1 first:mt-1"
                             aria-hidden
                           >
-                            {GROUP_LABEL[row.group]}
+                            <SectionLabel size="xs">
+                              {GROUP_LABEL[row.group]}
+                            </SectionLabel>
                           </li>
                         ) : (
                           <CommandRow
@@ -508,16 +512,16 @@ export function CommandPalette() {
                   <div className="flex items-center justify-between gap-3 border-t border-ink-border bg-tabs px-4 py-2.5 text-[10.5px] text-ink-subtle">
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1.5">
-                        <FooterKbd>↑↓</FooterKbd>
+                        <Kbd size="xs">↑↓</Kbd>
                         <span>navigate</span>
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <FooterKbd>↵</FooterKbd>
+                        <Kbd size="xs">↵</Kbd>
                         <span>run</span>
                       </span>
                     </div>
                     <span className="flex items-center gap-1.5">
-                      <FooterKbd>⌘K</FooterKbd>
+                      <Kbd size="xs">⌘K</Kbd>
                       <span>to toggle</span>
                     </span>
                   </div>
@@ -582,7 +586,15 @@ function CommandRow({
           aria-hidden
         />
         <span className="flex-1 truncate text-[12.5px]">{cmd.label}</span>
-        {cmd.hint && <RowKbd active={active}>{cmd.hint}</RowKbd>}
+        {cmd.hint && (
+          <Kbd
+            size="md"
+            tone={active ? "active" : "muted"}
+            className="hidden sm:inline-flex"
+          >
+            {cmd.hint}
+          </Kbd>
+        )}
         {active && (
           <CornerDownLeft
             className="h-3.5 w-3.5 shrink-0 text-[oklch(0.62_0.14_78)]"
@@ -594,49 +606,3 @@ function CommandRow({
   );
 }
 
-// Kbd chip inside a command row. Renders each character as its own
-// span so symbols like ⌘ / ⇧ sit on a baseline with the letter and
-// don't squish together. Padding and height are generous enough that
-// 1–3 character hints never look cramped.
-function RowKbd({
-  children,
-  active,
-}: {
-  children: string;
-  active: boolean;
-}) {
-  const chars = Array.from(children);
-  return (
-    <kbd
-      aria-hidden
-      className={cn(
-        "hidden h-[22px] shrink-0 items-center justify-center gap-[3px] rounded-[6px] border px-2 font-mono text-[11px] font-semibold leading-none sm:inline-flex",
-        active
-          ? "border-[oklch(0.55_0.12_75_/_0.45)] bg-[oklch(0.855_0.165_85_/_0.12)] text-[oklch(0.4_0.12_75)]"
-          : "border-ink-border bg-ink-surface text-ink-subtle",
-      )}
-    >
-      {chars.map((c, i) => (
-        <span key={i} className="inline-flex">
-          {c}
-        </span>
-      ))}
-    </kbd>
-  );
-}
-
-// Footer hint kbd — smaller, always visible at the bottom of the
-// palette.
-function FooterKbd({ children }: { children: string }) {
-  const chars = Array.from(children);
-  return (
-    <kbd
-      aria-hidden
-      className="inline-flex h-[18px] shrink-0 items-center justify-center gap-[2px] rounded-[4px] border border-ink-border bg-ink-surface px-1.5 font-mono text-[9.5px] font-semibold leading-none text-ink-muted"
-    >
-      {chars.map((c, i) => (
-        <span key={i}>{c}</span>
-      ))}
-    </kbd>
-  );
-}

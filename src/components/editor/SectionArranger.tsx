@@ -17,7 +17,14 @@ export function SectionArranger() {
   const toggle = useResumeStore((s) => s.toggleSectionVisibility);
 
   const [open, setOpen] = useState(false);
-  const items = order.map((id) => sections[id]);
+  // Experience is pinned to the left column in the resume layout
+  // (ResumePreview owns the grid), so reordering it has no visible
+  // effect and toggling its visibility collapses the whole paper.
+  // Hide it from the arranger so the list shows only what's actually
+  // rearrangeable — Education / Skills / Links.
+  const items = order
+    .filter((id) => id !== "experience")
+    .map((id) => sections[id]);
   const play = useSfx();
 
   return (
@@ -42,7 +49,7 @@ export function SectionArranger() {
             Arrange sections
           </span>
           <span className="truncate text-[11.5px] text-ink-subtle">
-            Drag to reorder · show / hide — {order.length} sections
+            Drag to reorder · show / hide — {items.length} sections
           </span>
         </div>
         <motion.span

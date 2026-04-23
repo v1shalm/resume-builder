@@ -66,7 +66,7 @@ export function SavedChip() {
             </>
           ) : (
             <>
-              <Check className="h-3 w-3 text-[oklch(0.58_0.14_150)]" aria-hidden />
+              <Check className="h-3 w-3 text-[var(--ink-success)]" aria-hidden />
               <span className="tabular-nums">
                 Saved <span className="text-ink-subtle/70">· {formatAgo(now - savedAt)}</span>
               </span>
