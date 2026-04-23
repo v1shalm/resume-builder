@@ -670,18 +670,32 @@ export const useResumeStore = create<Store>()(
         set({ resume, selection: { kind: "header" } }),
     }),
       {
-        // Only track `resume` for undo history. Selection changes
-        // (clicking a tab, picking a row) are not undoable.
-        partialize: (state) => ({ resume: state.resume }),
+        // Track resume content AND variant-level state so undo across
+        // a variant switch restores both halves together (otherwise
+        // `resume` reverts but `currentVariantId` stays on the new
+        // variant, desyncing the UI). Selection changes are still
+        // excluded from history — clicking a field isn't undoable.
+        partialize: (state) => ({
+          resume: state.resume,
+          variants: state.variants,
+          variantMeta: state.variantMeta,
+          variantOrder: state.variantOrder,
+          currentVariantId: state.currentVariantId,
+        }),
         // Cap memory. 100 steps ≈ plenty for a session without
         // blowing up localStorage or RAM.
         limit: 100,
         // Throttle rapid sets (like typing) so "h-e-l-l-o" becomes
         // ONE history entry, not five.
         handleSet: (handleSet) => throttle(handleSet, 500),
-        // Skip recording when nothing changed (e.g. clicking the
-        // same field) — compare by top-level identity.
-        equality: (a, b) => a.resume === b.resume,
+        // Skip recording when none of the tracked fields changed —
+        // reference equality since every action produces new objects.
+        equality: (a, b) =>
+          a.resume === b.resume &&
+          a.variants === b.variants &&
+          a.variantMeta === b.variantMeta &&
+          a.variantOrder === b.variantOrder &&
+          a.currentVariantId === b.currentVariantId,
       },
     ),
     {

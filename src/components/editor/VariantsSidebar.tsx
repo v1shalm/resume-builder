@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -75,54 +75,60 @@ export function VariantsSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed]);
 
-  // Two independent AnimatePresences so the pill and panel can
-  // overlap during transition. `mode="wait"` would introduce a
-  // 140ms gap where neither element is mounted — users perceived
-  // that as the pill "disappearing randomly." This way the outgoing
-  // one fades out while the incoming one fades in, and at any given
-  // frame at least one is on screen.
+  // Both pill AND panel are always mounted. They crossfade via the
+  // `animate` prop based on `collapsed` — no AnimatePresence, no
+  // unmount/remount, no way for the transition to get stuck on
+  // rapid toggles. The invisible one has `pointer-events: none`
+  // and `aria-hidden` so it can't intercept clicks or be focused.
   return (
     <>
-      <AnimatePresence>
-        {collapsed && <CollapsedPill key="pill" onExpand={expand} />}
-      </AnimatePresence>
-      <AnimatePresence>
-        {!collapsed && (
-          <motion.aside
-            key="panel"
-            role="complementary"
-            aria-label="Resumes and templates"
-            initial={{ opacity: 0, x: -12, filter: "blur(6px)" }}
-            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, x: -8, filter: "blur(4px)", transition: { duration: 0.14 } }}
-            transition={spring.soft}
-            style={{ width: SIDEBAR_WIDTH }}
-            className={cn(
-              "fixed bottom-3 left-3 top-[4.5rem] z-30 flex flex-col overflow-hidden rounded-xl border border-ink-border bg-panel",
-              // Raised floating card (Figma-style) — distinct from the
-              // editor chrome, reads as a detachable panel above canvas.
-              "shadow-[inset_0_1px_0_var(--shadow-highlight),0_2px_4px_var(--shadow-drop-close),0_18px_44px_-10px_var(--shadow-drop-far),0_8px_20px_-8px_var(--shadow-drop-mid)]",
-            )}
-          >
-            <Header onCollapse={collapse} />
-            <Tabs tab={tab} onChange={setTab} />
-            <div className="flex-1 overflow-auto">
-              {tab === "resumes" ? <ResumesTab /> : <TemplatesTab />}
-            </div>
-          </motion.aside>
+      <CollapsedPill collapsed={collapsed} onExpand={expand} />
+      <motion.aside
+        role="complementary"
+        aria-label="Resumes and templates"
+        aria-hidden={collapsed}
+        initial={false}
+        animate={
+          collapsed
+            ? { opacity: 0, x: -10, filter: "blur(4px)" }
+            : { opacity: 1, x: 0, filter: "blur(0px)" }
+        }
+        transition={spring.soft}
+        style={{
+          width: SIDEBAR_WIDTH,
+          pointerEvents: collapsed ? "none" : "auto",
+        }}
+        className={cn(
+          "fixed bottom-3 left-3 top-[4.5rem] z-30 flex flex-col overflow-hidden rounded-xl border border-ink-border bg-panel",
+          // Raised floating card (Figma-style) — distinct from the
+          // editor chrome, reads as a detachable panel above canvas.
+          "shadow-[inset_0_1px_0_var(--shadow-highlight),0_2px_4px_var(--shadow-drop-close),0_18px_44px_-10px_var(--shadow-drop-far),0_8px_20px_-8px_var(--shadow-drop-mid)]",
         )}
-      </AnimatePresence>
+      >
+        <Header onCollapse={collapse} />
+        <Tabs tab={tab} onChange={setTab} />
+        <div className="flex-1 overflow-auto">
+          {tab === "resumes" ? <ResumesTab /> : <TemplatesTab />}
+        </div>
+      </motion.aside>
     </>
   );
 }
 
 // ── Collapsed floating pill ─────────────────────────────────────
-// When tucked away, the sidebar becomes a small floating button at
-// the top-left corner below the Topbar. Shows the panel title +
-// chevron affordance; a tooltip surfaces the ⌘O shortcut for power
-// users without crowding the pill itself. Same raised chrome as a
-// white CTA — consistent with variant + template cards.
-function CollapsedPill({ onExpand }: { onExpand: () => void }) {
+// Always mounted. When `collapsed` is false it's driven to opacity 0
+// + slightly shifted + pointer-events-none so it's effectively gone
+// for users + assistive tech, but without unmount/remount churn.
+// Tooltip only registers events when `collapsed` is true (pointer-
+// events are off otherwise), so no phantom tooltips appear over the
+// expanded panel.
+function CollapsedPill({
+  collapsed,
+  onExpand,
+}: {
+  collapsed: boolean;
+  onExpand: () => void;
+}) {
   return (
     <Tooltip
       side="right"
@@ -134,21 +140,26 @@ function CollapsedPill({ onExpand }: { onExpand: () => void }) {
       }
     >
       <motion.button
-        key="pill"
         type="button"
         onClick={onExpand}
-        initial={{ opacity: 0, x: -8, filter: "blur(4px)" }}
-        animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-        exit={{ opacity: 0, x: -6, filter: "blur(4px)", transition: { duration: 0.12 } }}
+        initial={false}
+        animate={
+          collapsed
+            ? { opacity: 1, x: 0, filter: "blur(0px)" }
+            : { opacity: 0, x: -10, filter: "blur(4px)" }
+        }
         transition={spring.soft}
-        whileHover={{ x: 2 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={collapsed ? { x: 2 } : undefined}
+        whileTap={collapsed ? { scale: 0.97 } : undefined}
         aria-label="Expand resumes sidebar"
+        aria-hidden={!collapsed}
+        tabIndex={collapsed ? 0 : -1}
+        style={{ pointerEvents: collapsed ? "auto" : "none" }}
         className={cn(
           "group fixed left-3 top-[4.5rem] z-30 flex h-9 items-center gap-2 rounded-lg border border-ink-border bg-card pl-2.5 pr-2.5 text-[12px] font-medium text-ink-text",
           "shadow-[inset_0_1px_0_var(--shadow-highlight),0_1px_2px_var(--shadow-drop-close),0_10px_24px_-8px_var(--shadow-drop-far)]",
           "hover:shadow-[inset_0_1px_0_var(--shadow-highlight),0_3px_6px_var(--shadow-drop-close),0_14px_30px_-8px_var(--shadow-drop-far)]",
-          "transition-[box-shadow,transform] duration-fast",
+          "transition-[box-shadow] duration-fast",
         )}
       >
         <FileStack className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
@@ -349,12 +360,17 @@ function ResumesTab() {
       return;
     }
     // Snapshot before deletion so Undo can re-inject the variant
-    // at its original position with its original data intact.
+    // at its original position with its original data intact. If
+    // the deleted variant was the active one, Undo also promotes
+    // it back to active (the user clearly wanted to keep editing
+    // it — just restoring to the list and leaving them on a
+    // different variant would feel broken).
     const snap = useResumeStore.getState();
     const snapMeta = snap.variantMeta[id];
     const snapResume =
       id === snap.currentVariantId ? snap.resume : snap.variants[id];
     const snapIndex = snap.variantOrder.indexOf(id);
+    const wasActive = id === snap.currentVariantId;
 
     play("remove");
     deleteVariant(id);
@@ -365,15 +381,37 @@ function ResumesTab() {
         label: "Undo",
         onClick: () => {
           if (!snapMeta || !snapResume) return;
-          useResumeStore.setState((st) => ({
-            variants: { ...st.variants, [id]: snapResume },
-            variantMeta: { ...st.variantMeta, [id]: snapMeta },
-            variantOrder: [
-              ...st.variantOrder.slice(0, snapIndex),
-              id,
-              ...st.variantOrder.slice(snapIndex),
-            ],
-          }));
+          useResumeStore.setState((st) => {
+            if (wasActive) {
+              // Promote the restored variant back to active; snapshot
+              // whichever variant is currently active into `variants`
+              // so we don't lose unsaved edits on it.
+              return {
+                resume: snapResume,
+                variants: {
+                  ...st.variants,
+                  [st.currentVariantId]: st.resume,
+                },
+                variantMeta: { ...st.variantMeta, [id]: snapMeta },
+                variantOrder: [
+                  ...st.variantOrder.slice(0, snapIndex),
+                  id,
+                  ...st.variantOrder.slice(snapIndex),
+                ],
+                currentVariantId: id,
+                selection: { kind: "header" },
+              };
+            }
+            return {
+              variants: { ...st.variants, [id]: snapResume },
+              variantMeta: { ...st.variantMeta, [id]: snapMeta },
+              variantOrder: [
+                ...st.variantOrder.slice(0, snapIndex),
+                id,
+                ...st.variantOrder.slice(snapIndex),
+              ],
+            };
+          });
         },
       },
     });
