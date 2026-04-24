@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { ResumeDocument } from "../pdf/ResumeDocument";
 import { useResumeStore } from "@/lib/store";
 import { useSfx } from "@/lib/useSfx";
+import { showToast } from "@/lib/toast";
 import { Download, Loader2 } from "lucide-react";
 
 type Options = {
@@ -117,6 +118,12 @@ export function ExportDialog({
       URL.revokeObjectURL(url);
       play("success");
       onOpenChange(false);
+      // Sacred moment — user just created the artifact they'll send
+      // to a recruiter. A warm sendoff, not a generic "Success."
+      showToast({
+        message: "Resume ready — good luck out there",
+        duration: 4000,
+      });
     } catch (err) {
       console.error(err);
       play("error");
@@ -142,7 +149,7 @@ export function ExportDialog({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="export-filename"
-              className="text-[11.5px] font-medium uppercase tracking-[0.08em] text-ink-muted"
+              className="text-[11.5px] font-medium text-ink-muted"
             >
               Filename
             </label>
@@ -180,7 +187,7 @@ export function ExportDialog({
 
           <div className="flex items-center justify-between gap-3 rounded-xl border border-ink-border bg-input px-4 py-3 shadow-[inset_0_1px_0_var(--shadow-highlight)]">
             <div className="flex flex-col gap-0.5">
-              <span className="text-[11.5px] font-medium uppercase tracking-[0.08em] text-ink-muted">
+              <span className="text-[11.5px] font-medium text-ink-muted">
                 Estimated size
               </span>
               <span className="text-[15px] font-semibold tabular-nums text-ink-text">

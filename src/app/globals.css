@@ -37,6 +37,11 @@
      restrained green that reads as "intentional" rather than a web-1.0
      success-toast bark. */
   --ink-success: oklch(0.58 0.14 150);
+  /* Warn-state counterpart to --ink-success / --ink-danger. Tuned as a
+     solo mid-tier signal (score rings, progress) — distinct from
+     --warn-text which is calibrated as text sitting on an amber pill
+     and therefore much darker. */
+  --ink-warn: oklch(0.72 0.17 65);
   /* Tinted surfaces derived from --ink-success, used by the ATS-safe
      badge pill in the templates tab. */
   --success-border: oklch(0.58 0.12 150 / 0.35);
@@ -132,6 +137,19 @@
 
   /* Slider tick marks */
   --slider-tick: oklch(0.78 0.006 250);
+
+  /* ATS Match chip palettes. Missing = amber (same tonal family as
+     --warn-* so alerts and missing-keywords share a voice). Matched
+     = muted green, distinct from --ink-success so success toasts
+     don't dominate the keyword list. Spec hex values for light mode;
+     dark-mode equivalents defined under `.dark` below. */
+  --ats-miss-bg: oklch(0.95 0.05 85);
+  --ats-miss-bg-hover: oklch(0.93 0.07 85);
+  --ats-miss-text: oklch(0.40 0.11 70);
+  --ats-miss-border: oklch(0.73 0.17 68);
+  --ats-match-bg: oklch(0.94 0.04 128);
+  --ats-match-text: oklch(0.42 0.13 128);
+  --ats-match-border: oklch(0.82 0.09 128);
 }
 
 .dark {
@@ -154,6 +172,7 @@
   --ink-accent-text: oklch(0.22 0.05 75);
   --ink-danger: oklch(0.66 0.17 25);
   --ink-success: oklch(0.68 0.14 150);
+  --ink-warn: oklch(0.80 0.16 70);
   --success-border: oklch(0.68 0.12 150 / 0.4);
   --success-bg: oklch(0.68 0.14 150 / 0.12);
 
@@ -204,6 +223,17 @@
   --input-shadow-edge: oklch(0 0 0 / 0.25);
   --input-focus-border: oklch(0.5 0.04 85 / 0.55);
   --input-focus-ring: oklch(0.855 0.165 85 / 0.16);
+
+  /* ATS chip palettes — dark-mode tuned. Same hues, inverted
+     lightness, slightly reduced chroma on the text so it reads
+     without burning the eye at night. */
+  --ats-miss-bg: oklch(0.3 0.05 70 / 0.45);
+  --ats-miss-bg-hover: oklch(0.34 0.06 70 / 0.5);
+  --ats-miss-text: oklch(0.83 0.13 78);
+  --ats-miss-border: oklch(0.6 0.14 68 / 0.6);
+  --ats-match-bg: oklch(0.3 0.05 128 / 0.45);
+  --ats-match-text: oklch(0.82 0.13 128);
+  --ats-match-border: oklch(0.55 0.11 128 / 0.6);
 }
 
 @layer base {
@@ -355,6 +385,19 @@
       inset 0 1px 0 var(--shadow-highlight),
       0 1px 0 0 var(--shadow-edge-dark),
       0 1px 2px -1px var(--shadow-drop-close);
+  }
+  /* Puffy-chip stack — inner top gloss + inner bottom bevel + two
+     drop layers. One step more tactile than `shadow-raised-t`: the
+     inner bottom darkening gives the chip a "pressed into view"
+     feel, the drop stack lifts it off the surface. Used by starter
+     verbs, ATS keyword chips, template badges, and TokenInput
+     skill tokens — one chip vocabulary across the editor. */
+  .shadow-chip-t {
+    box-shadow:
+      inset 0 1px 0 var(--shadow-highlight),
+      inset 0 -1px 0 var(--shadow-edge-dark),
+      0 1px 1px 0 var(--shadow-drop-close),
+      0 2px 4px -1px var(--shadow-drop-mid);
   }
   .shadow-panel-t {
     box-shadow:

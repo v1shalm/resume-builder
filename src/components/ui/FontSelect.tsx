@@ -97,7 +97,7 @@ export function FontSelect({ value, onChange, ...rest }: Props) {
         >
           {Object.entries(grouped).map(([group, list]) => (
             <React.Fragment key={group}>
-              <div className="px-2.5 pb-1 pt-2 text-[10.5px] uppercase tracking-[0.08em] text-ink-subtle">
+              <div className="px-2.5 pb-1 pt-2 text-[10.5px] font-medium text-ink-subtle">
                 {group}
               </div>
               {list.map((f) => {

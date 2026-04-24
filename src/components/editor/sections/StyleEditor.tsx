@@ -230,7 +230,7 @@ function SubGroup({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h4 className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+        <h4 className="text-[11.5px] font-semibold text-ink-muted">
           {title}
         </h4>
         {hint ? (

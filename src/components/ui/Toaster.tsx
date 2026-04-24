@@ -37,10 +37,16 @@ export function Toaster() {
             transition={spring.soft}
             role="status"
             className={cn(
-              "pointer-events-auto flex max-w-[min(440px,calc(100vw-2rem))] items-center gap-2.5 rounded-full border border-ink-border bg-overlay py-1.5 pl-4 pr-1.5 shadow-overlay-t",
+              // Mini-dialog chrome — rounded-xl, border, bg-overlay,
+              // inset highlight + layered drop shadows. Same language
+              // as the palette / Dialog / VariantsSidebar so the toast
+              // reads as part of the same floating-panel family rather
+              // than a different shape dialect.
+              "pointer-events-auto flex max-w-[min(480px,calc(100vw-2rem))] items-center gap-2 rounded-xl border border-ink-border bg-overlay px-3 py-2",
+              "shadow-[inset_0_1px_0_var(--shadow-highlight),0_2px_4px_var(--shadow-drop-close),0_18px_44px_-12px_var(--shadow-drop-far),0_8px_20px_-8px_var(--shadow-drop-mid)]",
             )}
           >
-            <span className="flex-1 truncate text-[12.5px] text-ink-text">
+            <span className="flex-1 truncate text-[13px] text-ink-text">
               {toast.message}
             </span>
             {toast.action && (
@@ -50,7 +56,7 @@ export function Toaster() {
                   toast.action?.onClick();
                   dismiss();
                 }}
-                className="h-7 shrink-0 rounded-full border border-ink-border bg-card px-3 text-[12px] font-medium text-ink-text shadow-raised-t transition-colors duration-fast hover:bg-ink-hover"
+                className="h-7 shrink-0 rounded-md border border-ink-border bg-card px-2.5 text-[12px] font-medium text-ink-text shadow-raised-t transition-colors duration-fast hover:bg-ink-hover"
               >
                 {toast.action.label}
               </button>
@@ -59,7 +65,7 @@ export function Toaster() {
               type="button"
               onClick={dismiss}
               aria-label="Dismiss notification"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text"
             >
               <X className="h-3 w-3" aria-hidden />
             </button>

@@ -139,7 +139,7 @@ export function TokenInput({
               exit="exit"
               transition={spring.snap}
               className={cn(
-                "group/token inline-flex items-center gap-1 rounded-md border border-ink-border bg-card py-[3px] pl-2 pr-1 text-[12.5px] text-ink-text shadow-raised-t",
+                "group/token inline-flex items-center gap-1 rounded-md border border-ink-border bg-card py-[3px] pl-2 pr-1 text-[12.5px] text-ink-text shadow-chip-t",
               )}
             >
               <span>{token}</span>

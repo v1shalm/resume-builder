@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { AutoTextarea } from "@/components/ui/AutoTextarea";
 import { CharCount } from "@/components/ui/CharCount";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -90,43 +90,42 @@ export function BulletField({
         onBlur={() => setFocused(false)}
         placeholder={placeholder}
       />
-      <AnimatePresence initial={false}>
-        {showStarters && (
-          <motion.div
-            key="starters"
-            initial={{ opacity: 0, y: -2, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{
-              opacity: 0,
-              y: -2,
-              height: 0,
-              transition: { duration: 0.14 },
-            }}
-            transition={spring.snap}
-            className="overflow-hidden"
-          >
-            <div className="flex flex-wrap items-center gap-1 pt-0.5">
-              <SectionLabel size="sm" className="pr-1">Start with</SectionLabel>
-              {STARTER_VERBS.map((verb) => (
-                <motion.button
-                  key={verb}
-                  type="button"
-                  // Keep focus in the textarea by preventing the mousedown
-                  // from stealing it — chips act like "inline inserts."
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => prependVerb(verb)}
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.94 }}
-                  transition={spring.press}
-                  className="rounded-md border border-ink-border bg-card px-2 py-0.5 text-[11px] text-ink-muted shadow-raised-t transition-colors duration-fast hover:border-ink-borderStrong hover:text-ink-text"
-                >
-                  {verb}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
+      {/*
+        Reveal via grid-template-rows: 0fr → 1fr so the starter chip
+        row animates by transform rather than by animating `height`.
+        Content stays mounted so chip taps don't race the exit anim.
+      */}
+      <div
+        aria-hidden={!showStarters}
+        inert={!showStarters || undefined}
+        className={cn(
+          "grid overflow-hidden transition-[grid-template-rows,opacity] duration-fast ease-soft",
+          showStarters ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
-      </AnimatePresence>
+      >
+        <div className="min-h-0">
+          <div className="flex flex-wrap items-center gap-1 pt-0.5">
+            <SectionLabel size="sm" className="pr-1">Start with</SectionLabel>
+            {STARTER_VERBS.map((verb) => (
+              <motion.button
+                key={verb}
+                type="button"
+                // Keep focus in the textarea by preventing the mousedown
+                // from stealing it — chips act like "inline inserts."
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => prependVerb(verb)}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.94 }}
+                transition={spring.press}
+                tabIndex={showStarters ? 0 : -1}
+                className="rounded-md border border-ink-border bg-card px-2 py-0.5 text-[11px] text-ink-muted shadow-chip-t transition-colors duration-fast hover:border-ink-borderStrong hover:text-ink-text"
+              >
+                {verb}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
       {!isEmpty && (
         <div className="flex justify-end">
           <CharCount value={value} softMax={softMax} />

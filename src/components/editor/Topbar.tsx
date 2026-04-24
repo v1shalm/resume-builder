@@ -1,34 +1,27 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Tooltip, Kbd } from "@/components/ui/Tooltip";
-// Topbar uses the shared Kbd primitive for both the ⌘K chip and the
-// ⌘E hint on Export PDF — same vocabulary, different tones.
 import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/lib/store";
 import { useMatchStore } from "@/lib/match-store";
 import { useSidebarStore } from "@/lib/sidebar-store";
 import { useTheme } from "@/lib/theme";
 import { useThemeSwap } from "@/lib/useThemeSwap";
-import { useSfx } from "@/lib/useSfx";
 import { showToast } from "@/lib/toast";
-import { SavedChip } from "./SavedChip";
-import { OPEN_EXPORT_EVENT, OPEN_PALETTE_EVENT } from "./CommandPalette";
+import { matchCheck } from "@/lib/match-check";
+import { Download, Undo2, Redo2, Target, Sun, Moon } from "lucide-react";
+import { spring, stagger, rowFadeUp } from "@/lib/motion";
+import { OPEN_EXPORT_EVENT } from "./CommandPalette";
 
-// `@react-pdf/renderer` is ~300 KB+ of PDF engine. Code-split the whole
-// ExportDialog (which transitively pulls it in) so visitors who never
-// export don't pay the cost. `loadExportDialog` is exposed so we can
-// prefetch the chunk on hover/focus of the Export button — dynamic()
-// caches the resolved module, so repeated calls are free.
+// Lazy-load the heavy PDF engine until the user opens Export.
 const loadExportDialog = () =>
   import("./ExportDialog").then((m) => ({ default: m.ExportDialog }));
 const ExportDialog = dynamic(loadExportDialog, { ssr: false });
-import { Download, Sun, Moon, Undo2, Redo2, Search, Target } from "lucide-react";
-import { spring, stagger, rowFadeUp } from "@/lib/motion";
 
 type TemporalApi = {
   undo: () => void;
@@ -38,41 +31,23 @@ type TemporalApi = {
 };
 
 /*
- * Topbar hierarchy:
- *   left    — identity cluster: logo · "Resume" title · resume name · SavedChip
- *   right   — tools, grouped left-to-right by intent:
- *               history (undo / redo)
- *               │
- *               entry  (⌘K search chip) · theme
- *               │
- *               primary CTA (Export)
+ * Topbar v2 — three zones:
  *
- * Import JSON, Save JSON backup, Reset to starter, and the Sound mute
- * toggle all live in the command palette (⌘K) — keeping them out of
- * the bar trades one click (open palette) for a significantly calmer
- * chrome on every edit.
+ *   LEFT    — VariantName (click-to-rename) · SavedStatus (dot + label)
+ *   CENTER  — Undo / Redo, flanked by hairline dividers
+ *   RIGHT   — ThemeToggle · divider · AtsScoreButton (live %) · Export PDF
+ *
+ * Search pill + sidebar toggle stay out of the topbar — ⌘K owns
+ * "find / run", and the VariantsSidebar has its own floating pill.
+ * Keyboard shortcuts preserved: ⌘E export · ⌘J ATS · ⌘O sidebar ·
+ * ⌘⇧N new variant.
  */
 export function Topbar() {
-  // Only the header name drives this bar's render. Everything else
-  // is read via `getState()` inside callbacks, so typing a bullet
-  // doesn't re-render the whole topbar on every keystroke.
-  const name = useResumeStore((s) => s.resume.header.name);
-  const activeVariantLabel = useResumeStore(
-    (s) => s.variantMeta[s.currentVariantId]?.label,
-  );
-  const theme = useTheme((s) => s.theme);
-  const swapTheme = useThemeSwap();
-  const play = useSfx();
-
-  // Subscribe to zundo's temporal store so Undo/Redo know when to
-  // disable. Reactive — edits anywhere light up the buttons.
   const temporalStore = (
     useResumeStore as unknown as { temporal: import("zustand").StoreApi<TemporalApi> }
   ).temporal;
   const canUndo = useStore(temporalStore, (s) => s.pastStates.length > 0);
   const canRedo = useStore(temporalStore, (s) => s.futureStates.length > 0);
-  const matchDrawerOpen = useMatchStore((s) => s.drawerOpen);
-  const toggleMatchDrawer = useMatchStore((s) => s.toggleDrawer);
 
   const runUndo = () => {
     const t = temporalStore.getState();
@@ -93,11 +68,6 @@ export function Topbar() {
       duration: 2200,
       action: { label: "Undo", onClick: () => temporalStore.getState().undo() },
     });
-  };
-
-  const openPalette = () => {
-    play("tap");
-    window.dispatchEvent(new CustomEvent(OPEN_PALETTE_EVENT));
   };
 
   const [exportOpen, setExportOpen] = useState(false);
@@ -148,48 +118,26 @@ export function Topbar() {
         variants={stagger(0.045, 0.06)}
         initial="hidden"
         animate="show"
-        className="relative z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-ink-border bg-topbar px-3 shadow-topbar-t sm:px-4 md:px-5"
+        className="relative z-30 grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-ink-border bg-topbar px-3 shadow-topbar-t sm:px-4"
       >
-        {/* ── Identity cluster ─────────────────────────────────── */}
+        {/* LEFT — variant name + saved status */}
         <motion.div
           variants={rowFadeUp}
-          className="flex min-w-0 items-center gap-2 sm:gap-2.5"
+          className="flex min-w-0 items-center gap-2.5 justify-self-start"
         >
-          <motion.div
-            variants={rowFadeUp}
-            whileHover={{ rotate: -6, scale: 1.06 }}
-            transition={spring.snap}
-            className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-ink-border bg-gradient-to-b from-ink-raised to-ink-surface shadow-raised-t"
-            aria-hidden
-          >
-            <span className="text-[12px] font-semibold text-ink-text">R</span>
-          </motion.div>
-
-          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-            <h1 className="hidden shrink-0 text-[13px] font-semibold tracking-tight text-ink-text sm:inline">
-              Resume
-            </h1>
-            <span
-              aria-hidden
-              className="hidden text-ink-border sm:inline"
-            >
-              ·
-            </span>
-            <span className="truncate text-[12.5px] text-ink-muted">
-              {activeVariantLabel && activeVariantLabel !== "Default"
-                ? activeVariantLabel
-                : name || "Untitled"}
-            </span>
-            <SavedChip />
-          </div>
+          <VariantName />
+          <SavedStatus />
         </motion.div>
 
-        {/* ── Tools cluster ────────────────────────────────────── */}
+        {/* CENTER — undo / redo, hairline dividers on both sides */}
         <motion.div
           variants={rowFadeUp}
-          className="flex shrink-0 items-center gap-0.5 sm:gap-1"
+          className="flex items-center justify-self-center"
         >
-          {/* history */}
+          <span
+            aria-hidden
+            className="mx-2 hidden h-4 w-px bg-ink-border sm:block"
+          />
           <Tooltip
             content={
               <>
@@ -205,7 +153,6 @@ export function Topbar() {
               onClick={runUndo}
               disabled={!canUndo}
               aria-label="Undo"
-              className="hidden sm:inline-flex"
             >
               <Undo2 className="h-3.5 w-3.5" aria-hidden />
             </Button>
@@ -225,107 +172,27 @@ export function Topbar() {
               onClick={runRedo}
               disabled={!canRedo}
               aria-label="Redo"
-              className="hidden sm:inline-flex"
             >
               <Redo2 className="h-3.5 w-3.5" aria-hidden />
             </Button>
           </Tooltip>
-
-          <div
-            className="mx-1.5 hidden h-4 w-px bg-ink-border sm:block"
+          <span
             aria-hidden
+            className="mx-2 hidden h-4 w-px bg-ink-border sm:block"
           />
+        </motion.div>
 
-          {/* entry + theme */}
-          {/* Always-visible palette entry. On mobile it becomes an
-              icon-only button (touch target h-9); from sm+ it expands
-              to the Linear-style pill with the ⌘K hint. */}
-          <button
-            type="button"
-            onClick={openPalette}
-            aria-label="Open command palette"
-            className={cn(
-              "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-ink-border bg-ink-surface px-2 text-[11.5px] text-ink-subtle transition-colors duration-fast",
-              "shadow-well-t hover:border-ink-border-strong hover:text-ink-muted",
-              "sm:h-7 sm:pl-2 sm:pr-1.5",
-            )}
-          >
-            <Search className="h-3.5 w-3.5 sm:h-3 sm:w-3" aria-hidden />
-            <span className="hidden sm:inline">Search</span>
-            <Kbd size="sm" className="hidden sm:inline-flex">⌘K</Kbd>
-          </button>
-
-          <Tooltip content={theme === "dark" ? "Light mode" : "Dark mode"}>
-            <Button
-              variant="ghost"
-              size="icon"
-              sound={false}
-              onClick={swapTheme}
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {theme === "dark" ? (
-                  <motion.span
-                    key="sun"
-                    initial={{ opacity: 0, rotate: -60, scale: 0.7 }}
-                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                    exit={{ opacity: 0, rotate: 60, scale: 0.7 }}
-                    transition={spring.snap}
-                    className="flex"
-                  >
-                    <Sun className="h-3.5 w-3.5" aria-hidden />
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="moon"
-                    initial={{ opacity: 0, rotate: 60, scale: 0.7 }}
-                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                    exit={{ opacity: 0, rotate: -60, scale: 0.7 }}
-                    transition={spring.snap}
-                    className="flex"
-                  >
-                    <Moon className="h-3.5 w-3.5" aria-hidden />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Button>
-          </Tooltip>
-
-          <div
-            className="mx-1.5 hidden h-4 w-px bg-ink-border sm:block"
+        {/* RIGHT — theme toggle · divider · ATS score · Export */}
+        <motion.div
+          variants={rowFadeUp}
+          className="flex items-center gap-2 justify-self-end"
+        >
+          <ThemeToggle />
+          <span
             aria-hidden
+            className="mx-1 hidden h-4 w-px bg-ink-border sm:block"
           />
-
-          {/* Final Review cluster — ATS Match (secondary white CTA)
-              sits next to Export PDF (primary amber CTA). The grouping
-              implies workflow: check first, ship second. A thin
-              divider between them sharpens the "pre-flight check" vs
-              "ship" distinction. */}
-          <Button
-            variant="secondary"
-            size="md"
-            sound={false}
-            onClick={() => {
-              play(matchDrawerOpen ? "modalClose" : "modalOpen");
-              toggleMatchDrawer();
-            }}
-            aria-pressed={matchDrawerOpen}
-            aria-label={matchDrawerOpen ? "Close ATS match check" : "Open ATS match check"}
-            className="hidden px-3 sm:inline-flex"
-          >
-            <Target className="h-3.5 w-3.5" aria-hidden />
-            <span className="hidden md:inline">ATS Match</span>
-            <Kbd size="sm" className="ml-1 hidden md:inline-flex">⌘J</Kbd>
-          </Button>
-
-          <div
-            className="mx-2 hidden h-5 w-px bg-ink-border sm:mx-2.5 sm:block"
-            aria-hidden
-          />
-
-          {/* primary CTA — size-md matches the row's rhythm; the amber
-              gradient on `variant="primary"` carries the visual
-              prominence without needing extra height. */}
+          <AtsScoreButton />
           <Button
             variant="primary"
             size="md"
@@ -342,16 +209,225 @@ export function Topbar() {
           </Button>
         </motion.div>
       </motion.header>
-      {/*
-        Only mount the dialog once it's actually been opened. Because
-        `ExportDialog` is a dynamic import, gating the JSX here is what
-        defers the chunk load until the user clicks Export (or presses
-        ⌘E). The hover/focus prefetch warms the chunk earlier, so by
-        the time this mounts the module is already cached.
-      */}
       {exportOpen && (
         <ExportDialog open={exportOpen} onOpenChange={setExportOpen} />
       )}
     </>
+  );
+}
+
+// ── VariantName ────────────────────────────────────────────────────
+// Click the label to rename the active variant inline. Enter commits,
+// Esc reverts, blur commits. Rename writes through `renameVariant`.
+function VariantName() {
+  const currentId = useResumeStore((s) => s.currentVariantId);
+  const label = useResumeStore(
+    (s) => s.variantMeta[s.currentVariantId]?.label ?? "Untitled",
+  );
+  const renameVariant = useResumeStore((s) => s.renameVariant);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(label);
+
+  useEffect(() => {
+    setDraft(label);
+  }, [label]);
+
+  const commit = () => {
+    const next = draft.trim();
+    if (next && next !== label) renameVariant(currentId, next);
+    else setDraft(label);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDraft(label);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            cancel();
+          }
+        }}
+        onFocus={(e) => e.currentTarget.select()}
+        aria-label="Resume variant name"
+        className="h-6 min-w-0 max-w-[240px] rounded-md border border-[var(--input-focus-border)] bg-input px-1.5 text-[13px] font-medium text-ink-text shadow-[inset_0_1.5px_2px_var(--input-shadow-top),0_0_0_2.5px_var(--input-focus-ring)] focus:outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      title="Click to rename"
+      className="min-w-0 max-w-[260px] truncate rounded-md px-1.5 py-0.5 text-left text-[13px] font-medium text-ink-text transition-colors duration-fast hover:bg-ink-hover"
+    >
+      {label}
+    </button>
+  );
+}
+
+// ── SavedStatus ────────────────────────────────────────────────────
+// 5px colored dot + "Saved" / "Saving…" in muted text. Dot tint
+// flips during the 280ms write debounce window. Localstorage writes
+// are synchronous (zustand `persist`), so "Saving…" is a trust cue,
+// not a real network state.
+function SavedStatus() {
+  const resume = useResumeStore((s) => s.resume);
+  const [status, setStatus] = useState<"saving" | "saved">("saved");
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    setStatus("saving");
+    const t = setTimeout(() => setStatus("saved"), 280);
+    return () => clearTimeout(t);
+  }, [resume]);
+
+  return (
+    <span
+      className="flex shrink-0 items-center gap-1.5 text-[12px] text-ink-muted"
+      aria-live="polite"
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "h-[5px] w-[5px] rounded-full transition-colors duration-fast",
+          status === "saved"
+            ? "bg-[var(--ink-success)]"
+            : "bg-[var(--ink-accent)]",
+        )}
+      />
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={status}
+          initial={{ opacity: 0, y: 2 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -2, transition: { duration: 0.12 } }}
+          transition={spring.snap}
+        >
+          {status === "saved" ? "Saved" : "Saving…"}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
+
+// ── ThemeToggle ────────────────────────────────────────────────────
+// Sun ↔ Moon icon crossfade (rotate + scale + opacity spring). The
+// underlying swap plays a cinematic dawn/dusk audio sequence — see
+// useThemeSwap for details. Silent on the button itself so the sound
+// design owns the moment.
+function ThemeToggle() {
+  const theme = useTheme((s) => s.theme);
+  const swapTheme = useThemeSwap();
+  return (
+    <Tooltip content={theme === "dark" ? "Light mode" : "Dark mode"}>
+      <Button
+        variant="ghost"
+        size="icon"
+        sound={false}
+        onClick={swapTheme}
+        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {theme === "dark" ? (
+            <motion.span
+              key="sun"
+              initial={{ opacity: 0, rotate: -60, scale: 0.7 }}
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              exit={{ opacity: 0, rotate: 60, scale: 0.7 }}
+              transition={spring.snap}
+              className="flex"
+            >
+              <Sun className="h-3.5 w-3.5" aria-hidden />
+            </motion.span>
+          ) : (
+            <motion.span
+              key="moon"
+              initial={{ opacity: 0, rotate: 60, scale: 0.7 }}
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              exit={{ opacity: 0, rotate: -60, scale: 0.7 }}
+              transition={spring.snap}
+              className="flex"
+            >
+              <Moon className="h-3.5 w-3.5" aria-hidden />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </Button>
+    </Tooltip>
+  );
+}
+
+// ── AtsScoreButton ──────────────────────────────────────────────────
+// Live ATS score alongside the "ATS" label. JD is debounced 400ms so
+// the algorithm doesn't fire on every keystroke in the drawer, but
+// resume edits update the score immediately. Colour bands: >=80
+// green · >=50 amber · else red.
+function AtsScoreButton() {
+  const resume = useResumeStore((s) => s.resume);
+  const jd = useResumeStore(
+    (s) => s.variantMeta[s.currentVariantId]?.jobDescription ?? "",
+  );
+  const toggleDrawer = useMatchStore((s) => s.toggleDrawer);
+  const drawerOpen = useMatchStore((s) => s.drawerOpen);
+
+  const [debouncedJd, setDebouncedJd] = useState(jd);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedJd(jd), 400);
+    return () => clearTimeout(t);
+  }, [jd]);
+
+  const result = useMemo(
+    () => matchCheck(resume, debouncedJd),
+    [resume, debouncedJd],
+  );
+  const { score, hasJd } = result;
+
+  // --warn-text is light-mode-only (reads dark-brown in dark mode,
+  // where the score becomes invisible on the dark secondary button).
+  // --ats-miss-text is defined in both themes.
+  const scoreTone =
+    score >= 80
+      ? "text-[var(--ink-success)]"
+      : score >= 50
+        ? "text-[var(--ats-miss-text)]"
+        : "text-[var(--ink-danger)]";
+
+  return (
+    <Button
+      variant="secondary"
+      size="md"
+      sound={false}
+      onClick={() => toggleDrawer()}
+      aria-pressed={drawerOpen}
+      aria-label={hasJd ? `ATS match ${score}%` : "Open ATS match check"}
+      className="px-3"
+    >
+      <Target className="h-3.5 w-3.5" aria-hidden />
+      <span className="hidden sm:inline">ATS</span>
+      {hasJd && (
+        <span className={cn("ml-1 font-semibold tabular-nums", scoreTone)}>
+          {score}%
+        </span>
+      )}
+      <Kbd size="sm" className="ml-1 hidden md:inline-flex">⌘J</Kbd>
+    </Button>
   );
 }

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
-  ChevronLeft,
-  ChevronRight,
+  PanelLeft,
   Copy,
   Pencil,
   Trash2,
@@ -197,12 +196,11 @@ function CollapsedPill({
           "transition-[box-shadow] duration-fast",
         )}
       >
-        <FileStack className="h-3.5 w-3.5 text-ink-muted" aria-hidden />
-        <span>Resumes</span>
-        <ChevronRight
-          className="h-3.5 w-3.5 text-ink-subtle transition-[color,transform] duration-fast group-hover:translate-x-0.5 group-hover:text-ink-muted"
+        <PanelLeft
+          className="h-3.5 w-3.5 text-ink-muted transition-colors duration-fast group-hover:text-ink-text"
           aria-hidden
         />
+        <span>Resumes</span>
       </motion.button>
     </Tooltip>
   );
@@ -224,7 +222,7 @@ function Header({ onCollapse }: { onCollapse: () => void }) {
         aria-label="Collapse sidebar"
         className="flex h-9 w-9 items-center justify-center rounded-md text-ink-subtle transition-colors duration-fast hover:bg-ink-hover hover:text-ink-text sm:h-7 sm:w-7"
       >
-        <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+        <PanelLeft className="h-3.5 w-3.5" aria-hidden />
       </button>
     </header>
   );
@@ -334,8 +332,15 @@ function ThumbCard({
         "group relative flex w-full flex-col gap-2.5 overflow-hidden rounded-xl border bg-card p-2.5 text-left transition-[box-shadow,border-color,transform] duration-fast",
         active
           ? [
-              "border-[oklch(0.55_0.12_75_/_0.55)]",
-              "shadow-[inset_0_1px_0_var(--shadow-highlight),0_0_0_2px_oklch(0.855_0.165_85_/_0.45),0_2px_4px_var(--shadow-drop-close),0_10px_24px_-10px_var(--shadow-drop-far)]",
+              // Amber selection frame — 1px border + 2px INSET ring,
+              // both in --ink-accent. Drawn entirely inside the card
+              // box so the sidebar's overflow-hidden + rounded corners
+              // can't clip it (that was the "uneven stroke" bug). Same
+              // tone on both layers so there's no double-banded halo.
+              // Template/variant selection is a persistent state, not
+              // a CTA — fine place for the brand accent to live.
+              "border-[var(--ink-accent)]",
+              "shadow-[inset_0_0_0_2px_var(--ink-accent),0_2px_4px_var(--shadow-drop-close),0_10px_24px_-10px_var(--shadow-drop-far)]",
             ].join(" ")
           : [
               "border-ink-border",
@@ -373,7 +378,7 @@ function ResumesTab() {
     play("add");
     const id = createVariant();
     showToast({
-      message: "Duplicated",
+      message: "New variant ready",
       duration: 1800,
       action: {
         label: "Undo",
@@ -386,7 +391,7 @@ function ResumesTab() {
 
   const handleDelete = (id: string, label: string) => {
     if (order.length <= 1) {
-      showToast({ message: "Can't delete the last variant", duration: 2000 });
+      showToast({ message: "Keep at least one resume around", duration: 2000 });
       return;
     }
     // Snapshot before deletion so Undo can re-inject the variant
@@ -572,7 +577,7 @@ function TemplatesTab() {
   const handleApply = (tpl: Template) => {
     if (tpl.id === activeTemplateId) return;
     applyTemplate(tpl.id);
-    showToast({ message: `Applied “${tpl.label}”`, duration: 2000 });
+    showToast({ message: `“${tpl.label}” applied`, duration: 2000 });
   };
 
   return (
@@ -622,14 +627,14 @@ function TemplatesTab() {
 function AtsBadge({ badge }: { badge: Template["atsBadge"] }) {
   if (badge === "ats-safe") {
     return (
-      <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--success-border)] bg-[var(--success-bg)] px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-success)]">
+      <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--success-border)] bg-[var(--success-bg)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--ink-success)] shadow-chip-t">
         <ShieldCheck className="h-2.5 w-2.5" aria-hidden />
         ATS
       </span>
     );
   }
   return (
-    <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full border border-ink-border bg-ink-surface px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-ink-subtle">
+    <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full border border-ink-border bg-ink-surface px-1.5 py-0.5 text-[10px] font-semibold text-ink-subtle shadow-chip-t">
       <Columns className="h-2.5 w-2.5" aria-hidden />
       Modern
     </span>

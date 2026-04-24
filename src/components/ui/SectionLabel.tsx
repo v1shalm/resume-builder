@@ -3,15 +3,15 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-// ── Mono-uppercase section label ──────────────────────────────────
-// The `font-mono uppercase tracking-[0.08em]` label pattern that
-// appears for "CONTACTS", "TITLE FONT", "THEME", "BULLETS", stat-card
-// headers etc. Three sizes — use the smallest inside dialogs, the
-// middle inside the editor, and the largest for top-level section
-// titles if ever needed.
+// ── Section label ──────────────────────────────────────────────────
+// Sentence-case micro-label for "Contacts", "Title font", "Theme",
+// "Bullets", stat-card headers etc. Three sizes — use the smallest
+// inside dialogs, the middle inside the editor, and the largest for
+// top-level section titles if ever needed.
 //
-// Keeps tracking, weight, and tone consistent so labels across the
-// whole app read as "the same vocabulary".
+// Keeps weight and tone consistent so labels across the whole app
+// read as "the same vocabulary". Linear/Raycast-adjacent typographic
+// voice: no uppercase, no tracking, no mono.
 
 type Size = "xs" | "sm" | "md";
 type Tone = "subtle" | "muted";
@@ -43,7 +43,7 @@ export function SectionLabel({
   return (
     <Comp
       className={cn(
-        "font-mono font-semibold uppercase tracking-[0.08em] leading-none",
+        "font-medium leading-none",
         SIZE_CLASS[size],
         TONE_CLASS[tone],
         className,
