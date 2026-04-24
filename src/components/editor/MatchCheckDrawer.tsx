@@ -282,6 +282,7 @@ function ScoreHeroCard({
   result: ReturnType<typeof matchCheck>;
 }) {
   const { score, grade } = result;
+  const flashColor = scoreToRingColor(score);
   return (
     <div className="flex flex-col items-center gap-3 rounded-xl border border-ink-border bg-card p-6 shadow-raised-t">
       <div className="relative">
@@ -326,8 +327,7 @@ function ScoreHeroCard({
             transition={{ duration: 1.0, ease: "easeOut" }}
             className="pointer-events-none absolute inset-0 rounded-full"
             style={{
-              boxShadow:
-                "0 0 28px 2px color-mix(in oklch, var(--ink-warn) 60%, transparent)",
+              boxShadow: `0 0 28px 2px color-mix(in oklch, ${flashColor} 60%, transparent)`,
             }}
             aria-hidden
           />
