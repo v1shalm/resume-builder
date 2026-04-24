@@ -198,7 +198,7 @@ export function MatchCheckDrawer() {
                   <KeywordGroup
                     title="Missing · high impact"
                     keywords={result.missing.highImpact}
-                    badge={{ label: "Add these first", tone: "danger" }}
+                    badge={{ label: "Add these first" }}
                     tone="missing"
                     onChipClick={handleCopyKeyword}
                   />
@@ -208,7 +208,7 @@ export function MatchCheckDrawer() {
                   <KeywordGroup
                     title="Missing · lower priority"
                     keywords={result.missing.lowPriority}
-                    badge={{ label: "Nice to have", tone: "warn" }}
+                    badge={{ label: "Nice to have" }}
                     tone="missing"
                     onChipClick={handleCopyKeyword}
                   />
@@ -461,6 +461,28 @@ function ArcGauge({
   variant?: "hero" | "mini";
 }) {
   const pct = Math.max(0, Math.min(100, score));
+
+  // Animated fill sweep. `animatedPct` grows from the previous value
+  // to `pct` over 1.5 s (same curve as CountingNumber) so the arc
+  // visually fills in from the start. First mount ramps 0 → pct —
+  // the ring reads as filling the circle rather than snapping to
+  // its final position. Color is derived from the TARGET score, not
+  // the animated value, so the hue stays stable during the sweep
+  // even if the update crossed a tier threshold.
+  const [animatedPct, setAnimatedPct] = useState(0);
+  const prevPctRef = useRef(0);
+  useEffect(() => {
+    if (prevPctRef.current === pct) return;
+    const from = prevPctRef.current;
+    prevPctRef.current = pct;
+    const controls = animate(from, pct, {
+      duration: 1.5,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (v) => setAnimatedPct(v),
+    });
+    return () => controls.stop();
+  }, [pct]);
+
   const cx = size / 2;
   const cy = size / 2;
   const r = cx - stroke;
@@ -476,7 +498,7 @@ function ArcGauge({
   const N_TOTAL = isHero ? 80 : 36;
   const filledSegments = Math.max(
     0,
-    Math.min(N_TOTAL, Math.round((pct / 100) * N_TOTAL)),
+    Math.min(N_TOTAL, Math.round((animatedPct / 100) * N_TOTAL)),
   );
 
   const segArc = (a: number, b: number) => {
@@ -551,7 +573,7 @@ function ArcGauge({
       {filledSegments > 0 && (
         <g style={glowFilter ? { filter: glowFilter } : undefined}>
           {segments.map((s, i) => {
-            const isLast = i === segments.length - 1 && pct < 100;
+            const isLast = i === segments.length - 1 && animatedPct < 100;
             return (
               <path
                 key={i}
@@ -637,7 +659,7 @@ function KeywordGroup({
 }: {
   title: string;
   keywords: Keyword[];
-  badge?: { label: string; tone: "danger" | "warn" };
+  badge?: { label: string };
   tone: "missing" | "matched";
   onChipClick?: (kw: string) => void;
 }) {
@@ -666,23 +688,12 @@ function KeywordGroup({
   );
 }
 
-function GroupBadge({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "danger" | "warn";
-}) {
+function GroupBadge({ label }: { label: string }) {
+  // Neutral pill — guidance copy only. The chip colors below already
+  // signal high-impact vs lower-priority, so tinting this badge the
+  // same hue would double-encode and clash visually.
   return (
-    <span
-      className={cn(
-        "inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-[10px] font-semibold",
-        tone === "danger" &&
-          "border-[color-mix(in_oklch,var(--ink-danger)_45%,transparent)] bg-[var(--ink-hover-danger)] text-[var(--ink-danger)]",
-        tone === "warn" &&
-          "border-[var(--ats-miss-border)] bg-[var(--ats-miss-bg)] text-[var(--ats-miss-text)]",
-      )}
-    >
+    <span className="inline-flex h-5 shrink-0 items-center rounded-full border border-ink-border bg-ink-surface px-2 text-[10px] font-medium text-ink-muted">
       {label}
     </span>
   );
