@@ -14,8 +14,8 @@ import type { Resume } from "./types";
 //     exact → stem → synonym → partial-phrase
 //   weighted score + per-bucket sub-scores + grade
 
-export type Zone = "required" | "preferred";
-export type Bucket = "skills" | "softSkills" | "roleTerms";
+type Zone = "required" | "preferred";
+type Bucket = "skills" | "softSkills" | "roleTerms";
 
 export type Keyword = {
   /** Canonical lowercase form — what we match against. */
@@ -29,16 +29,16 @@ export type Keyword = {
 
 export type Tone = "excellent" | "strong" | "fair" | "weak" | "poor";
 
-export type Grade = {
+type Grade = {
   min: number;
   label: string;
   tone: Tone;
   message: string;
 };
 
-export type SubScore = { matched: number; total: number };
+type SubScore = { matched: number; total: number };
 
-export type MatchCheckResult = {
+type MatchCheckResult = {
   /** 0–100 integer score. 0 if JD is too short / empty. */
   score: number;
   /** True once the JD is long enough to run the algorithm. */
