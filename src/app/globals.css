@@ -276,7 +276,12 @@
 
   ::selection {
     background: oklch(0.855 0.165 85 / 0.35);
-    color: var(--ink-text);
+    /* --ink-accent-text is a stable dark warm tone in both themes —
+       reads cleanly on the amber selection bg whether the surface is
+       the dark page chrome OR the always-cream preview paper. Using
+       --ink-text here breaks dark mode against the preview because
+       --ink-text becomes near-white. */
+    color: var(--ink-accent-text);
   }
 
   :focus-visible {
